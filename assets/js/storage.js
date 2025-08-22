@@ -1,0 +1,1 @@
+// LocalStorage handling placeholder
