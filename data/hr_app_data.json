@@ -1,0 +1,260 @@
+{
+  "config": {
+    "workHours": {
+      "start": "09:00",
+      "end": "17:00"
+    },
+    "penalties": {
+      "late": [
+        {
+          "min": 16,
+          "max": 30,
+          "pctDailyWage": 0.05
+        },
+        {
+          "min": 31,
+          "max": 60,
+          "pctDailyWage": 0.1
+        },
+        {
+          "min": 61,
+          "max": 120,
+          "pctDailyWage": 0.2
+        }
+      ],
+      "absenceDailyPct": 1.0
+    },
+    "caps": {
+      "monthlyDeductionPctOfSalary": 0.25
+    },
+    "overtime": {
+      "weekdayMultiplier": 1.25,
+      "weekendMultiplier": 1.5,
+      "policy": "pay"
+    },
+    "idealEmployeeBonusPct": 0.1,
+    "wfhPerWeekLimit": 2,
+    "latePermissionsPerMonth": 2,
+    "workweek": {
+      "weekendDays": [
+        "Friday"
+      ],
+      "timezone": "Africa/Cairo"
+    },
+    "holidays": []
+  },
+  "employees": [
+    {
+      "id": 1,
+      "name": "Ahmed Ali",
+      "department": "HR",
+      "role": "hr",
+      "monthlySalary": 12000,
+      "annualVacationDays": 21,
+      "preferences": {
+        "language": "ar",
+        "theme": "dark",
+        "dateFormat": "DD/MM/YYYY"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Sara Mohamed",
+      "department": "Engineering",
+      "role": "employee",
+      "monthlySalary": 18000,
+      "annualVacationDays": 30,
+      "preferences": {
+        "language": "en",
+        "theme": "light",
+        "dateFormat": "YYYY-MM-DD"
+      }
+    },
+    {
+      "id": 3,
+      "name": "Omar Hassan",
+      "department": "Finance",
+      "role": "employee",
+      "monthlySalary": 15000,
+      "annualVacationDays": 25,
+      "preferences": {
+        "language": "en",
+        "theme": "dark",
+        "dateFormat": "MM/DD/YYYY"
+      }
+    },
+    {
+      "id": 4,
+      "name": "Mona Saad",
+      "department": "Engineering",
+      "role": "manager",
+      "monthlySalary": 22000,
+      "annualVacationDays": 30,
+      "preferences": {
+        "language": "ar",
+        "theme": "dark",
+        "dateFormat": "YYYY-MM-DD"
+      }
+    }
+  ],
+  "attendanceRecords": [
+    {
+      "id": 1,
+      "employeeId": 2,
+      "date": "2025-08-01",
+      "checkIn": "09:15",
+      "checkOut": "17:00",
+      "status": "Late",
+      "minutesLate": 15,
+      "isWFH": false,
+      "isLeave": false,
+      "notes": "Traffic"
+    },
+    {
+      "id": 2,
+      "employeeId": 3,
+      "date": "2025-08-01",
+      "checkIn": "08:55",
+      "checkOut": "17:05",
+      "status": "Present",
+      "minutesLate": 0,
+      "isWFH": false,
+      "isLeave": false,
+      "notes": ""
+    },
+    {
+      "id": 3,
+      "employeeId": 2,
+      "date": "2025-08-05",
+      "checkIn": "09:40",
+      "checkOut": "17:10",
+      "status": "Late",
+      "minutesLate": 40,
+      "isWFH": false,
+      "isLeave": false,
+      "notes": ""
+    },
+    {
+      "id": 4,
+      "employeeId": 3,
+      "date": "2025-08-10",
+      "checkIn": "09:00",
+      "checkOut": "17:00",
+      "status": "Present",
+      "minutesLate": 0,
+      "isWFH": true,
+      "isLeave": false,
+      "notes": "WFH"
+    }
+  ],
+  "permissionRequests": [
+    {
+      "id": 1,
+      "employeeId": 2,
+      "type": "Late",
+      "payload": {
+        "requestedDate": "2025-08-05",
+        "minutesExpectedLate": 30,
+        "reason": "Doctor appointment",
+        "weekIndex": 32
+      },
+      "status": "Pending",
+      "managerComment": null,
+      "createdAt": "2025-08-01T10:00:00Z",
+      "decidedAt": null
+    },
+    {
+      "id": 2,
+      "employeeId": 3,
+      "type": "WFH",
+      "payload": {
+        "requestedDate": "2025-08-10",
+        "reason": "Personal",
+        "weekIndex": 33
+      },
+      "status": "Approved",
+      "managerComment": "Ok",
+      "createdAt": "2025-08-02T09:00:00Z",
+      "decidedAt": "2025-08-02T12:00:00Z"
+    },
+    {
+      "id": 3,
+      "employeeId": 2,
+      "type": "Overtime",
+      "payload": {
+        "requestedDate": "2025-08-12",
+        "overtimeHours": 2,
+        "reason": "Deploy",
+        "weekIndex": 33
+      },
+      "status": "Pending",
+      "managerComment": null,
+      "createdAt": "2025-08-08T09:00:00Z",
+      "decidedAt": null
+    }
+  ],
+  "tasks": [
+    {
+      "taskId": 1,
+      "title": "Build Login Page",
+      "description": "Implement login form and validation",
+      "priority": "High",
+      "deadline": "2025-08-20T17:00:00",
+      "assignees": [
+        2
+      ],
+      "status": "InProgress",
+      "attachments": [],
+      "comments": [
+        {
+          "by": 1,
+          "text": "Please focus on validation",
+          "at": "2025-08-01T12:00:00Z"
+        }
+      ],
+      "createdBy": 1,
+      "createdAt": "2025-08-01T11:00:00Z",
+      "updatedAt": "2025-08-03T09:00:00Z",
+      "dependencyTaskIds": []
+    },
+    {
+      "taskId": 2,
+      "title": "Prepare Payroll Report",
+      "description": "Monthly payroll calculations",
+      "priority": "Medium",
+      "deadline": "2025-08-30T17:00:00",
+      "assignees": [
+        3
+      ],
+      "status": "NotStarted",
+      "attachments": [],
+      "comments": [],
+      "createdBy": 1,
+      "createdAt": "2025-08-02T10:00:00Z",
+      "updatedAt": null,
+      "dependencyTaskIds": []
+    }
+  ],
+  "monthlyPayrollImpact": [
+    {
+      "employeeId": 2,
+      "month": "2025-08",
+      "latePenalty": 100,
+      "absencePenalty": 0,
+      "taskPenalty": 0,
+      "overtimePay": 200,
+      "bonus": 0,
+      "capApplied": false
+    },
+    {
+      "employeeId": 3,
+      "month": "2025-08",
+      "latePenalty": 0,
+      "absencePenalty": 0,
+      "taskPenalty": 50,
+      "overtimePay": 0,
+      "bonus": 100,
+      "capApplied": false
+    }
+  ]
+}
