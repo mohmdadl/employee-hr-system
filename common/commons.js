@@ -232,3 +232,102 @@ export function validatePermissionRequest(request, allRequests, config) {
   }
   return { ok: true };
 }
+
+/* ========= Apply Approval ========= */
+export function applyApproval(store, request) {
+  const emp = store.employees.find(e => e.id === request.employeeId);
+  if (!emp) return;
+
+  const date = request.payload?.requestedDate;
+
+  switch (request.type) {
+    case "Late": {
+      const rec = store.attendanceRecords.find(r => r.employeeId === emp.id && r.date === date);
+      if (rec) {
+        rec.status = "Present";
+        rec.minutesLate = 0;
+        rec.isLeave = false;
+        rec.isWFH = false;
+      } else {
+        store.attendanceRecords.push({
+          id: Date.now(),
+          employeeId: emp.id,
+          date,
+          checkIn: "09:00",
+          checkOut: "17:00",
+          status: "Present",
+          minutesLate: 0,
+          isLeave: false,
+          isWFH: false,
+          notes: "Approved late permission"
+        });
+      }
+      break;
+    }
+
+    case "WFH": {
+      const existing = store.attendanceRecords.find(r => r.employeeId === emp.id && r.date === date);
+      if (existing) {
+        existing.status = "Present(WFH)";
+        existing.isWFH = true;
+        existing.isLeave = false;
+      } else {
+        store.attendanceRecords.push({
+          id: Date.now(),
+          employeeId: emp.id,
+          date,
+          checkIn: null,
+          checkOut: null,
+          status: "Present(WFH)",
+          minutesLate: 0,
+          isLeave: false,
+          isWFH: true,
+          notes: "Approved WFH"
+        });
+      }
+      break;
+    }
+
+    case "Absence": {
+      const existing = store.attendanceRecords.find(r => r.employeeId === emp.id && r.date === date);
+      if (existing) {
+        existing.status = "Leave";
+        existing.isLeave = true;
+      } else {
+        store.attendanceRecords.push({
+          id: Date.now(),
+          employeeId: emp.id,
+          date,
+          checkIn: null,
+          checkOut: null,
+          status: "Leave",
+          minutesLate: null,
+          isLeave: true,
+          isWFH: false,
+          notes: "Approved absence"
+        });
+      }
+      break;
+    }
+
+    case "Overtime": {
+      // payroll handled separately
+      break;
+    }
+
+    case "DeadlineExtension": {
+      const task = store.tasks.find(t => t.taskId === request.payload.taskId);
+      if (task) {
+        task.deadline = request.payload.newDeadline || task.deadline;
+        task.updatedAt = new Date().toISOString();
+        task.comments = task.comments || [];
+        task.comments.push({
+          by: "Manager",
+          text: "Deadline extended by approval",
+          at: new Date().toISOString()
+        });
+      }
+      break;
+    }
+  }
+}

@@ -1,5 +1,4 @@
 <!-- Manager Dashboard -->
-<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -29,6 +28,17 @@
 
     <!-- Pending Approvals -->
     <h2>Pending Approvals</h2>
+
+    <!-- Filter Tabs -->
+    <ul class="nav nav-tabs mb-3" id="approvalTabs">
+        <li class="nav-item"><button class="nav-link active" data-type="All">All</button></li>
+        <li class="nav-item"><button class="nav-link" data-type="Late">Late</button></li>
+        <li class="nav-item"><button class="nav-link" data-type="Absence">Absence</button></li>
+        <li class="nav-item"><button class="nav-link" data-type="WFH">WFH</button></li>
+        <li class="nav-item"><button class="nav-link" data-type="Overtime">Overtime</button></li>
+        <li class="nav-item"><button class="nav-link" data-type="DeadlineExtension">DeadlineExtension</button></li>
+    </ul>
+
     <table class="table table-bordered" id="approvalsTable">
         <thead>
             <tr>
