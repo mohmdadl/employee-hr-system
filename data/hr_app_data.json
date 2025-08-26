@@ -1,0 +1,276 @@
+{
+  "config": {
+    "workHours": { "start": "09:00", "end": "17:00" },
+    "penalties": {
+      "late": [
+        { "min": 16, "max": 30, "pctDailyWage": 0.05 },
+        { "min": 31, "max": 60, "pctDailyWage": 0.10 },
+        { "min": 61, "max": 120, "pctDailyWage": 0.20 }
+      ],
+      "absenceDailyPct": 1.0
+    },
+    "caps": { "monthlyDeductionPctOfSalary": 0.25 },
+    "overtime": {
+      "weekdayMultiplier": 1.25,
+      "weekendMultiplier": 1.5,
+      "policy": "pay"
+    },
+    "idealEmployeeBonusPct": 0.10,
+    "wfhPerWeekLimit": 2,
+    "latePermissionsPerMonth": 2,
+    "workweek": { "weekendDays": ["Friday"], "timezone": "Africa/Cairo" },
+    "holidays": []
+  },
+
+  "employees": [
+    {
+      "id": 1,
+      "name": "Ahmed Ali",
+      "department": "HR",
+      "role": "hr",
+      "monthlySalary": 12000,
+      "annualVacationDays": 21,
+      "preferences": { "language": "ar", "theme": "dark", "dateFormat": "DD/MM/YYYY" }
+    },
+    {
+      "id": 2,
+      "name": "Sara Mohamed",
+      "department": "Engineering",
+      "role": "employee",
+      "monthlySalary": 18000,
+      "annualVacationDays": 30,
+      "preferences": { "language": "en", "theme": "light", "dateFormat": "YYYY-MM-DD" }
+    },
+    {
+      "id": 3,
+      "name": "Omar Hassan",
+      "department": "Finance",
+      "role": "employee",
+      "monthlySalary": 15000,
+      "annualVacationDays": 25,
+      "preferences": { "language": "en", "theme": "dark", "dateFormat": "MM/DD/YYYY" }
+    },
+    {
+      "id": 4,
+      "name": "Mona Saad",
+      "department": "Engineering",
+      "role": "manager",
+      "monthlySalary": 22000,
+      "annualVacationDays": 30,
+      "preferences": { "language": "ar", "theme": "dark", "dateFormat": "YYYY-MM-DD" }
+    },
+    {
+      "id": 5,
+      "name": "Youssef Nabil",
+      "department": "Security",
+      "role": "security",
+      "monthlySalary": 9000,
+      "annualVacationDays": 21,
+      "preferences": { "language": "ar", "theme": "light", "dateFormat": "YYYY-MM-DD" }
+    },
+    {
+      "id": 6,
+      "name": "Laila Amin",
+      "department": "Operations",
+      "role": "employee",
+      "monthlySalary": 16000,
+      "annualVacationDays": 24,
+      "preferences": { "language": "en", "theme": "light", "dateFormat": "YYYY-MM-DD" }
+    }
+  ],
+
+  "attendanceRecords": [
+    { "id": 1, "employeeId": 2, "date": "2025-08-01", "checkIn": "09:10", "checkOut": "17:00", "status": "Late", "minutesLate": 10, "isWFH": false, "isLeave": false, "notes": "Traffic" },
+    { "id": 2, "employeeId": 3, "date": "2025-08-01", "checkIn": "08:55", "checkOut": "17:05", "status": "Present", "minutesLate": 0, "isWFH": false, "isLeave": false, "notes": "" },
+    { "id": 3, "employeeId": 2, "date": "2025-08-05", "checkIn": "09:45", "checkOut": "17:10", "status": "Late", "minutesLate": 45, "isWFH": false, "isLeave": false, "notes": "" },
+    { "id": 4, "employeeId": 3, "date": "2025-08-10", "checkIn": "09:00", "checkOut": "17:00", "status": "Present", "minutesLate": 0, "isWFH": true, "isLeave": false, "notes": "WFH" },
+    { "id": 5, "employeeId": 6, "date": "2025-08-12", "checkIn": "11:15", "checkOut": null, "status": "Absent", "minutesLate": null, "isWFH": false, "isLeave": false, "notes": "No show" },
+    { "id": 6, "employeeId": 1, "date": "2025-08-15", "checkIn": null, "checkOut": null, "status": "Leave", "minutesLate": 0, "isWFH": false, "isLeave": true, "notes": "Annual leave" },
+    { "id": 7, "employeeId": 2, "date": "2025-08-18", "checkIn": "08:58", "checkOut": "19:00", "status": "Present", "minutesLate": 0, "isWFH": false, "isLeave": false, "notes": "Stayed late (overtime req)" },
+    { "id": 8, "employeeId": 6, "date": "2025-08-19", "checkIn": "09:20", "checkOut": "17:00", "status": "Late", "minutesLate": 20, "isWFH": false, "isLeave": false, "notes": "" },
+    { "id": 9, "employeeId": 2, "date": "2025-08-22", "checkIn": "09:05", "checkOut": "17:00", "status": "Late", "minutesLate": 5, "isWFH": false, "isLeave": false, "notes": "" },
+    { "id": 10, "employeeId": 3, "date": "2025-08-23", "checkIn": "09:02", "checkOut": "17:00", "status": "Late", "minutesLate": 2, "isWFH": false, "isLeave": false, "notes": "" },
+    { "id": 11, "employeeId": 2, "date": "2025-08-25", "checkIn": "10:40", "checkOut": "17:00", "status": "Late", "minutesLate": 100, "isWFH": false, "isLeave": false, "notes": "" },
+    { "id": 12, "employeeId": 3, "date": "2025-08-26", "checkIn": "09:00", "checkOut": "17:00", "status": "Present", "minutesLate": 0, "isWFH": true, "isLeave": false, "notes": "WFH" }
+  ],
+
+  "permissionRequests": [
+    {
+      "id": 1,
+      "employeeId": 2,
+      "type": "Late",
+      "payload": { "requestedDate": "2025-08-01", "minutesExpectedLate": 15, "reason": "Doctor", "weekIndex": 31 },
+      "status": "Approved",
+      "managerComment": "OK",
+      "createdAt": "2025-07-31T10:00:00Z",
+      "decidedAt": "2025-08-01T08:30:00Z"
+    },
+    {
+      "id": 2,
+      "employeeId": 3,
+      "type": "WFH",
+      "payload": { "requestedDate": "2025-08-10", "reason": "Personal", "weekIndex": 33 },
+      "status": "Approved",
+      "managerComment": "Ok",
+      "createdAt": "2025-08-02T09:00:00Z",
+      "decidedAt": "2025-08-02T12:00:00Z"
+    },
+    {
+      "id": 3,
+      "employeeId": 2,
+      "type": "Overtime",
+      "payload": { "requestedDate": "2025-08-18", "overtimeHours": 2, "reason": "Deploy", "weekIndex": 34 },
+      "status": "Approved",
+      "managerComment": "Proceed",
+      "createdAt": "2025-08-18T16:30:00Z",
+      "decidedAt": "2025-08-18T16:45:00Z"
+    },
+    {
+      "id": 4,
+      "employeeId": 1,
+      "type": "Absence",
+      "payload": { "requestedDate": "2025-08-15", "reason": "Vacation", "weekIndex": 33 },
+      "status": "Approved",
+      "managerComment": "Enjoy",
+      "createdAt": "2025-08-10T09:00:00Z",
+      "decidedAt": "2025-08-11T08:00:00Z"
+    },
+    {
+      "id": 5,
+      "employeeId": 2,
+      "type": "DeadlineExtension",
+      "payload": { "requestedDate": "2025-08-18", "taskId": 1, "extraDays": 3, "reason": "Blocked by dependency" },
+      "status": "Pending",
+      "managerComment": null,
+      "createdAt": "2025-08-16T10:00:00Z",
+      "decidedAt": null
+    },
+    {
+      "id": 6,
+      "employeeId": 6,
+      "type": "WFH",
+      "payload": { "requestedDate": "2025-08-19", "reason": "Errands", "weekIndex": 34 },
+      "status": "Rejected",
+      "managerComment": "WFH limit exceeded",
+      "createdAt": "2025-08-18T09:00:00Z",
+      "decidedAt": "2025-08-18T12:00:00Z"
+    },
+    {
+      "id": 7,
+      "employeeId": 6,
+      "type": "WFH",
+      "payload": { "requestedDate": "2025-08-20", "reason": "Errands", "weekIndex": 34 },
+      "status": "Approved",
+      "managerComment": "OK",
+      "createdAt": "2025-08-18T13:00:00Z",
+      "decidedAt": "2025-08-18T14:00:00Z"
+    },
+    {
+      "id": 8,
+      "employeeId": 6,
+      "type": "WFH",
+      "payload": { "requestedDate": "2025-08-21", "reason": "Errands", "weekIndex": 34 },
+      "status": "Approved",
+      "managerComment": "OK",
+      "createdAt": "2025-08-18T15:00:00Z",
+      "decidedAt": "2025-08-18T16:00:00Z"
+    },
+    {
+      "id": 9,
+      "employeeId": 6,
+      "type": "WFH",
+      "payload": { "requestedDate": "2025-08-22", "reason": "Errands", "weekIndex": 34 },
+      "status": "Rejected",
+      "managerComment": "Over weekly quota (2/wk)",
+      "createdAt": "2025-08-19T09:00:00Z",
+      "decidedAt": "2025-08-19T10:00:00Z"
+    },
+    {
+      "id": 10,
+      "employeeId": 2,
+      "type": "Late",
+      "payload": { "requestedDate": "2025-08-22", "minutesExpectedLate": 10, "reason": "Bus delay", "weekIndex": 34 },
+      "status": "Approved",
+      "managerComment": "OK",
+      "createdAt": "2025-08-21T18:00:00Z",
+      "decidedAt": "2025-08-21T18:10:00Z"
+    },
+    {
+      "id": 11,
+      "employeeId": 2,
+      "type": "Late",
+      "payload": { "requestedDate": "2025-08-25", "minutesExpectedLate": 95, "reason": "Family errand", "weekIndex": 35 },
+      "status": "Rejected",
+      "managerComment": "Late permission quota reached (2/month)",
+      "createdAt": "2025-08-24T19:00:00Z",
+      "decidedAt": "2025-08-24T20:00:00Z"
+    }
+  ],
+
+  "tasks": [
+    {
+      "taskId": 1,
+      "title": "Build Login Page",
+      "description": "Implement login form and validation",
+      "priority": "High",
+      "deadline": "2025-08-20T17:00:00",
+      "assignees": [2],
+      "status": "InProgress",
+      "attachments": [],
+      "comments": [
+        { "by": 1, "text": "Please focus on validation", "at": "2025-08-01T12:00:00Z" }
+      ],
+      "createdBy": 1,
+      "createdAt": "2025-08-01T11:00:00Z",
+      "updatedAt": "2025-08-03T09:00:00Z",
+      "dependencyTaskIds": []
+    },
+    {
+      "taskId": 2,
+      "title": "Prepare Payroll Report",
+      "description": "Monthly payroll calculations",
+      "priority": "Medium",
+      "deadline": "2025-08-30T17:00:00",
+      "assignees": [3],
+      "status": "NotStarted",
+      "attachments": [],
+      "comments": [],
+      "createdBy": 1,
+      "createdAt": "2025-08-02T10:00:00Z",
+      "updatedAt": null,
+      "dependencyTaskIds": []
+    },
+    {
+      "taskId": 3,
+      "title": "Client Meeting Prep",
+      "description": "Slides and agenda",
+      "priority": "Critical",
+      "deadline": "2025-07-28T17:00:00",
+      "assignees": [2],
+      "status": "InProgress",
+      "attachments": [],
+      "comments": [],
+      "createdBy": 4,
+      "createdAt": "2025-07-20T10:00:00Z",
+      "updatedAt": null,
+      "dependencyTaskIds": []
+    },
+    {
+      "taskId": 4,
+      "title": "QA Test Cycle",
+      "description": "Regression tests for release",
+      "priority": "Low",
+      "deadline": "2025-08-29T17:00:00",
+      "assignees": [6],
+      "status": "Blocked",
+      "attachments": [],
+      "comments": [{ "by": 4, "text": "Waiting for build", "at": "2025-08-19T14:00:00Z" }],
+      "createdBy": 4,
+      "createdAt": "2025-08-18T11:00:00Z",
+      "updatedAt": "2025-08-19T14:00:00Z",
+      "dependencyTaskIds": []
+    }
+  ],
+
+  "monthlyPayrollImpact": []
+}
