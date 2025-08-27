@@ -118,22 +118,46 @@ function renderApprovals() {
             const id = parseInt(e.target.closest("tr").dataset.id);
             const req = store.permissionRequests.find(r => r.id === id);
             if (!req) return;
-            // validate via commons.validatePermissionRequest
             const v = commons.validatePermissionRequest(req, store.permissionRequests, store.config || {});
             if (!v.ok) {
                 alert("Cannot approve: " + v.reason);
                 return;
             }
+
+            // تحديث حالة الطلب للموافقة
             req.status = "Approved";
             req.managerComment = "Approved by manager";
             req.decidedAt = new Date().toISOString();
-            // business action
+
+            // تحديث المهام المرتبطة بالطلب (تجنب ظهورها كمتأخرة)
+            if (req.taskIds?.length) {
+                req.taskIds.forEach(tid => {
+                    const task = store.tasks.find(t => (t.taskId || t.id) == tid);
+                    if (!task) return;
+
+                    switch (req.type) {
+                        case "Absence":
+                        case "WFH":
+                            const oldDeadline = new Date(task.deadline);
+                            oldDeadline.setDate(oldDeadline.getDate() + 1);
+                            task.deadline = oldDeadline.toISOString();
+                            break;
+                        case "Late":
+                            task.status = "InProgress";
+                            break;
+                    }
+                });
+            }
+
+            // تطبيق أي أعمال تجارية أخرى
             commons.applyApproval(store, req);
+
             saveData();
             rerenderAll();
-            alert("✅ Request Approved");
+            alert("✅ Request Approved (tasks updated)");
         });
     });
+
 
     tbody.querySelectorAll(".reject-btn").forEach(btn => {
         btn.addEventListener("click", e => {
