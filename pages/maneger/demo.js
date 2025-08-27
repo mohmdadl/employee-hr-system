@@ -155,20 +155,39 @@ function renderOverdueTasks() {
     const tbody = document.querySelector("#overdueTable tbody");
     if (!tbody) return;
     tbody.innerHTML = "";
+
     const overdue = store.tasks.filter(t => commons.isTaskOverdue(t));
+
     overdue.forEach(task => {
-        const assignees = (task.assignees || []).map(id => store.employees.find(e => e.id === id)?.name || id).join(", ");
+        const assignees = (task.assignees || [])
+            .map(id => store.employees.find(e => e.id === id)?.name || id)
+            .join(", ");
         const tr = document.createElement("tr");
+
         tr.innerHTML = `
-      <td>${task.title}</td>
-      <td>${assignees}</td>
-      <td>${task.priority}</td>
-      <td>${task.deadline}</td>
-      <td>${task.status}</td>
-    `;
+            <td>${task.title}</td>
+            <td>${assignees}</td>
+            <td>${task.priority}</td>
+            <td>${task.deadline}</td>
+            <td>${task.status}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary edit-task-btn" data-id="${task.taskId || task.id}">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+            </td>
+        `;
         tbody.appendChild(tr);
     });
+
+    // attach edit handlers
+    tbody.querySelectorAll(".edit-task-btn").forEach(btn => {
+        btn.addEventListener("click", e => {
+            const taskId = e.target.closest("button").dataset.id;
+            openEditTaskModal(taskId);
+        });
+    });
 }
+
 
 function renderWorkload() {
     const tbody = document.querySelector("#workloadTable tbody");
@@ -197,17 +216,17 @@ function renderWorkload() {
 }
 
 function renderTasksTable() {
-    // also used to open edit modal (add Edit button)
     const tasksTBody = document.querySelector("#tasksTable tbody");
-    if (!tasksTBody) {
-        // if tasks table isn't present (older HTML), create a lightweight tasks table in Overdue or skip
-        return;
-    }
+    if (!tasksTBody) return;
+
     tasksTBody.innerHTML = "";
     store.tasks.forEach(task => {
-        const assignees = (task.assignees || []).map(id => store.employees.find(e => e.id === id)?.name || id).join(", ");
+        const assignees = (task.assignees || [])
+            .map(id => store.employees.find(e => e.id === id)?.name || id)
+            .join(", ");
         const tr = document.createElement("tr");
-        tr.dataset.taskId = task.taskId || task.id || "";
+        tr.dataset.taskId = task.taskId || task.id || ""; // camelCase مهم
+
         tr.innerHTML = `
       <td>${task.title}</td>
       <td>${assignees}</td>
@@ -223,11 +242,14 @@ function renderTasksTable() {
     tasksTBody.querySelectorAll(".edit-task-btn").forEach(btn => {
         btn.addEventListener("click", e => {
             const row = e.target.closest("tr");
-            const tid = row.dataset.taskid;
+            const tid = row.dataset.taskId; // camelCase corrected
             openEditTaskModal(tid);
         });
     });
 }
+
+
+
 
 /* ---------- Tasks: create & edit ---------- */
 
@@ -251,7 +273,9 @@ function setupCreateTaskForm() {
         const title = document.getElementById("taskTitle")?.value?.trim();
         const priority = document.getElementById("taskPriority")?.value;
         const deadline = document.getElementById("taskDeadline")?.value;
-        const assignees = Array.from(document.getElementById("taskAssignees")?.selectedOptions || []).map(o => o.value);
+        const assignees = Array.from(
+            document.getElementById("taskAssignees")?.selectedOptions || []
+        ).map(o => parseInt(o.value));
 
         if (!title || !priority || !deadline || assignees.length === 0) {
             alert("⚠️ Please fill all fields.");
