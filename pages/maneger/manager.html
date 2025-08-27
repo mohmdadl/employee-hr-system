@@ -81,6 +81,36 @@
         </thead>
         <tbody></tbody>
     </table>
+
+    <!-- Task Creation Form -->
+    <h2 class="mt-5">Create New Task</h2>
+    <form id="createTaskForm" class="p-3 border rounded bg-light">
+        <div class="mb-2">
+            <label for="taskTitle" class="form-label">Task Title</label>
+            <input type="text" id="taskTitle" class="form-control" required>
+        </div>
+
+        <div class="mb-2">
+            <label for="taskPriority" class="form-label">Priority</label>
+            <select id="taskPriority" class="form-select" required>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+        </div>
+
+        <div class="mb-2">
+            <label for="taskDeadline" class="form-label">Deadline</label>
+            <input type="date" id="taskDeadline" class="form-control" required>
+        </div>
+
+        <div class="mb-2">
+            <label for="taskAssignees" class="form-label">Assignees</label>
+            <select id="taskAssignees" class="form-select" multiple required></select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create Task</button>
+    </form>
 </body>
 
 </html>

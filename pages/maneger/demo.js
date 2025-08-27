@@ -2,7 +2,7 @@ import * as commons from '../../common/commons.js';
 
 let currentFilter = "All";
 
-// load data from local storage or fetch from JSon file 
+// load data from local storage or fetch from JSON file 
 async function loadData() {
     const localData = localStorage.getItem("hrData");
     if (localData) return JSON.parse(localData);
@@ -48,7 +48,6 @@ function renderApprovals(store) {
     pending.forEach(r => {
         const emp = store.employees.find(e => e.id === r.employeeId);
 
-        // different color for different types of requests
         let rowClass = "";
         switch (r.type) {
             case "Absence": rowClass = "table-danger"; break;
@@ -99,25 +98,23 @@ function checkBeforeApprove(store, id) {
         wfhPerWeekLimit: 2
     };
 
-    // --- Late Permission ---
-    if (req.type === "Late" && !commons.canApproveLatePermission(store.permissionRequests, req.employeeId, req.payload.requestedDate, config)) {
+    if (req.type === "Late" &&
+        !commons.canApproveLatePermission(store.permissionRequests, req.employeeId, req.payload.requestedDate, config)) {
         alert("❌ Late permission quota exceeded (2 per month).");
         return false;
     }
 
-    // --- Work From Home ---
-    if (req.type === "WFH" && !commons.canApproveWFH(store.permissionRequests, req.employeeId, req.payload.requestedDate, config)) {
+    if (req.type === "WFH" &&
+        !commons.canApproveWFH(store.permissionRequests, req.employeeId, req.payload.requestedDate, config)) {
         alert("❌ Work From Home quota exceeded (2 per week).");
         return false;
     }
 
-    // --- Overtime ---
     if (req.type === "Overtime" && (!req.payload.overtimeHours || req.payload.overtimeHours <= 0)) {
         alert("❌ Overtime request must include valid hours.");
         return false;
     }
 
-    // --- Deadline Extension ---
     if (req.type === "DeadlineExtension" && !req.payload.taskId) {
         alert("❌ Missing taskId for deadline extension.");
         return false;
@@ -140,7 +137,6 @@ function updateRequestStatus(store, id, status, comment) {
 
         saveData(store);
 
-        // update all tables after approve 
         renderApprovals(store);
         renderAttendance(store);
         renderOverdueTasks(store);
@@ -191,6 +187,64 @@ function renderWorkload(store) {
     });
 }
 
+// Fill employee dropdown in task form
+function populateTaskAssignees(store) {
+    const select = document.querySelector("#taskAssignees");
+    if (!select) return;
+    select.innerHTML = "";
+    store.employees.forEach(emp => {
+        const opt = document.createElement("option");
+        opt.value = emp.id;
+        opt.textContent = emp.name;
+        select.appendChild(opt);
+    });
+}
+
+// Create Task form handling
+function setupTaskForm(store) {
+    document.querySelector("#createTaskForm")?.addEventListener("submit", e => {
+        e.preventDefault();
+
+        const titleInput = document.querySelector("#taskTitle");
+        const priorityInput = document.querySelector("#taskPriority");
+        const deadlineInput = document.querySelector("#taskDeadline");
+        const assigneesInput = document.querySelector("#taskAssignees");
+
+        if (!titleInput || !priorityInput || !deadlineInput || !assigneesInput) {
+            alert("❌ One or more form fields are missing in the DOM.");
+            return;
+        }
+
+        const title = titleInput.value.trim();
+        const priority = priorityInput.value;
+        const deadline = deadlineInput.value;
+        const assignees = Array.from(assigneesInput.selectedOptions).map(opt => parseInt(opt.value));
+
+        if (!title || !deadline || assignees.length === 0) {
+            alert("⚠️ Please fill all required fields before creating a task.");
+            return;
+        }
+
+        const newTask = {
+            id: Date.now(),
+            title,
+            priority,
+            deadline,
+            status: "InProgress",
+            assignees
+        };
+
+        store.tasks.push(newTask);
+        saveData(store);
+
+        renderOverdueTasks(store);
+        renderWorkload(store);
+
+        alert("✅ Task created successfully!");
+        e.target.reset();
+    });
+}
+
 // Tabs filter setup
 function setupApprovalTabs(store) {
     document.querySelectorAll("#approvalTabs .nav-link").forEach(tab => {
@@ -210,4 +264,6 @@ loadData().then(store => {
     renderOverdueTasks(store);
     renderWorkload(store);
     setupApprovalTabs(store);
+    populateTaskAssignees(store);
+    setupTaskForm(store);
 });
