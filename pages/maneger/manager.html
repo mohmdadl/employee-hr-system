@@ -2,85 +2,297 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Manager Dashboard</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <script type="module" src="./demo.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+
+    <!-- Optional icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+
+    <!-- Your JS (module) -->
+    <script type="module" src="./demo.js" defer></script>
+
+    <style>
+        /* Small polish to match your style */
+        .section-card {
+            border-radius: 12px;
+        }
+
+        .form-section-title {
+            font-weight: 600;
+        }
+
+        .table thead th {
+            white-space: nowrap;
+        }
+
+        .badge-pill {
+            border-radius: 999px;
+        }
+    </style>
 </head>
 
 <body class="p-4">
-    <h1 class="mb-4">📊 Manager Dashboard</h1>
+    <div class="container-fluid">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h1 class="mb-0">📊 Manager Dashboard</h1>
+            <div class="d-flex gap-2">
+                <span class="badge text-bg-secondary badge-pill px-3 py-2" id="currentMonthBadge">—</span>
+                <span class="badge text-bg-light border badge-pill px-3 py-2" id="teamSizeBadge">—</span>
+            </div>
+        </div>
 
-    <!-- Team Attendance -->
-    <h2>Team Attendance</h2>
-    <table class="table table-bordered" id="attendanceTable">
-        <thead>
-            <tr>
-                <th>Employee</th>
-                <th>Status</th>
-                <th>Time In</th>
-                <th>Time Out</th>
-                <th>Minutes Late</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+        <!-- ===== Team Attendance ===== -->
+        <div class="card section-card mb-4">
+            <div class="card-body">
+                <h2 class="card-title h4 mb-3">Team Attendance</h2>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle" id="attendanceTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Employee</th>
+                                <th>Status</th>
+                                <th>Time In</th>
+                                <th>Time Out</th>
+                                <th>Minutes Late</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-    <!-- Pending Approvals -->
-    <h2>Pending Approvals</h2>
+        <!-- ===== Pending Approvals ===== -->
+        <div class="card section-card mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h2 class="card-title h4 mb-0">Pending Approvals</h2>
+                    <div class="small text-muted" id="pendingCount">—</div>
+                </div>
 
-    <!-- Filter Tabs -->
-    <ul class="nav nav-tabs mb-3" id="approvalTabs">
-        <li class="nav-item"><button class="nav-link active" data-type="All">All</button></li>
-        <li class="nav-item"><button class="nav-link" data-type="Late">Late</button></li>
-        <li class="nav-item"><button class="nav-link" data-type="Absence">Absence</button></li>
-        <li class="nav-item"><button class="nav-link" data-type="WFH">WFH</button></li>
-        <li class="nav-item"><button class="nav-link" data-type="Overtime">Overtime</button></li>
-        <li class="nav-item"><button class="nav-link" data-type="DeadlineExtension">DeadlineExtension</button></li>
-    </ul>
+                <!-- Filter Tabs -->
+                <ul class="nav nav-tabs my-3" id="approvalTabs">
+                    <li class="nav-item"><button class="nav-link active" data-type="All">All</button></li>
+                    <li class="nav-item"><button class="nav-link" data-type="Late">Late</button></li>
+                    <li class="nav-item"><button class="nav-link" data-type="Absence">Absence</button></li>
+                    <li class="nav-item"><button class="nav-link" data-type="WFH">WFH</button></li>
+                    <li class="nav-item"><button class="nav-link" data-type="Overtime">Overtime</button></li>
+                    <li class="nav-item"><button class="nav-link"
+                            data-type="DeadlineExtension">DeadlineExtension</button></li>
+                </ul>
 
-    <table class="table table-bordered" id="approvalsTable">
-        <thead>
-            <tr>
-                <th>Employee</th>
-                <th>Request Type</th>
-                <th>Requested Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle" id="approvalsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Employee</th>
+                                <th>Request Type</th>
+                                <th>Requested Date</th>
+                                <th>Status</th>
+                                <th style="width:180px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-    <!-- Overdue Tasks -->
-    <h2>Overdue Tasks</h2>
-    <table class="table table-bordered" id="overdueTable">
-        <thead>
-            <tr>
-                <th>Task Title</th>
-                <th>Assignee</th>
-                <th>Priority</th>
-                <th>Deadline</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+        <!-- ===== Overdue Tasks ===== -->
+        <div class="card section-card mb-4">
+            <div class="card-body">
+                <h2 class="card-title h4 mb-3">Overdue Tasks</h2>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle" id="overdueTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Task Title</th>
+                                <th>Assignee(s)</th>
+                                <th>Priority</th>
+                                <th>Deadline</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-    <!-- Team Tasks Workload View -->
-    <h2>Team Tasks (Workload)</h2>
-    <table class="table table-bordered" id="workloadTable">
-        <thead>
-            <tr>
-                <th>Employee</th>
-                <th>Total Tasks</th>
-                <th>In Progress</th>
-                <th>Overdue</th>
-                <th>Completed</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+        <!-- ===== Team Tasks (Workload) ===== -->
+        <div class="card section-card mb-4">
+            <div class="card-body">
+                <h2 class="card-title h4 mb-3">Team Tasks (Workload)</h2>
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle" id="workloadTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Employee</th>
+                                <th>Total Tasks</th>
+                                <th>In Progress</th>
+                                <th>Overdue</th>
+                                <th>Completed</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Team Reports (Attendance KPIs + Payroll Impact) ===== -->
+        <div class="card section-card mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h2 class="card-title h4 mb-0">Team Reports</h2>
+                    <div class="d-flex gap-2 align-items-center">
+                        <label class="mb-0">Month</label>
+                        <input id="reportMonth" type="month" class="form-control form-control-sm" style="width:170px">
+                        <button id="refreshReports" class="btn btn-sm btn-outline-secondary">Refresh</button>
+                    </div>
+                </div>
+
+                <p class="text-muted small">Attendance KPIs and payroll impact for the selected month. Payroll uses
+                    `commons.js` rules.</p>
+
+                <h5 class="mt-3">Attendance KPIs</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="teamReportsTable">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Present</th>
+                                <th>Late</th>
+                                <th>Absent</th>
+                                <th>WFH</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <h5 class="mt-3">Payroll Impact (Month Summary)</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="payrollImpactTable">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Late Penalty</th>
+                                <th>Absence Penalty</th>
+                                <th>Task Penalty</th>
+                                <th>Overtime Pay</th>
+                                <th>Bonus</th>
+                                <th>Cap Applied</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Task Creation Form ===== -->
+        <div class="card section-card mb-5">
+            <div class="card-body">
+                <h2 class="card-title h4 mb-3">Create New Task</h2>
+                <form id="createTaskForm" class="p-3 border rounded bg-light">
+                    <div class="mb-2">
+                        <label for="taskTitle" class="form-label">Task Title</label>
+                        <input type="text" id="taskTitle" class="form-control" required>
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="taskPriority" class="form-label">Priority</label>
+                        <select id="taskPriority" class="form-select" required>
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="taskDeadline" class="form-label">Deadline</label>
+                        <input type="datetime-local" id="taskDeadline" class="form-control" required>
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="taskAssignees" class="form-label">Assignees</label>
+                        <select id="taskAssignees" class="form-select" multiple required></select>
+                        <div class="form-text">Hold Ctrl/Cmd to select multiple employees.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Create Task</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== Edit Task Modal ===== -->
+        <div class="modal fade" id="editTaskModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <form id="editTaskForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Task</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body row g-3 px-3">
+                            <input type="hidden" id="editTaskId" />
+                            <div class="col-md-6">
+                                <label for="editTaskTitle" class="form-label">Title</label>
+                                <input type="text" class="form-control" id="editTaskTitle" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editTaskPriority" class="form-label">Priority</label>
+                                <select class="form-select" id="editTaskPriority" required>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editTaskDeadline" class="form-label">Deadline</label>
+                                <input type="datetime-local" class="form-control" id="editTaskDeadline" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editTaskStatus" class="form-label">Status</label>
+                                <select class="form-select" id="editTaskStatus" required>
+                                    <option value="Not Started">Not Started</option>
+                                    <option value="InProgress">In Progress</option>
+                                    <option value="Blocked">Blocked</option>
+                                    <option value="Completed">Completed</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="editTaskDescription" class="form-label">Description</label>
+                                <textarea id="editTaskDescription" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label for="editTaskAssignees" class="form-label">Assignees</label>
+                                <select class="form-select" id="editTaskAssignees" multiple required></select>
+                                <div class="form-text">Hold Ctrl/Cmd to select multiple employees.</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-save2 me-1"></i>Save
+                                Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div> <!-- /container-fluid -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
