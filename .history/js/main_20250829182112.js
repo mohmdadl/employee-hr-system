@@ -50,10 +50,10 @@ const DataService = {
      */
     saveRequests: (data) => localStorage.setItem('permissionRequests', JSON.stringify(data)),
 
-    /**
+    
      * Saves the HR settings object to localStorage.
      * @param {object} data - The updated settings object.
-     */
+     
     saveSettings: (data) => localStorage.setItem('hrSettings', JSON.stringify(data)),
 
     /**

@@ -29,7 +29,7 @@ const DataService = {
     getApprovedLeaves: () => JSON.parse(localStorage.getItem('approvedLeaves')),
 
 
-
+    
     // --- SETTERS (Functions to write/update data) ---
 
     /**

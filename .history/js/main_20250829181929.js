@@ -1,9 +1,9 @@
 
 const DataService = {
    
-    //   Initializes the database in localStorage.
-    //   If data doesnt exist, it copies the initial data from mock-data.js.
-    //   This should be called once when the application starts.
+      Initializes the database in localStorage.
+      If data doesn't exist, it copies the initial data from mock-data.js.
+      This should be called once when the application starts.
      
     init: function() {
         if (!localStorage.getItem('employees')) {
@@ -18,7 +18,6 @@ const DataService = {
         }
     },
 
-
     // --- GETTERS (Functions to read data) ---
 
     getEmployees: () => JSON.parse(localStorage.getItem('employees')),
@@ -27,8 +26,6 @@ const DataService = {
     getRequests: () => JSON.parse(localStorage.getItem('permissionRequests')),
     getSettings: () => JSON.parse(localStorage.getItem('hrSettings')),
     getApprovedLeaves: () => JSON.parse(localStorage.getItem('approvedLeaves')),
-
-
 
     // --- SETTERS (Functions to write/update data) ---
 

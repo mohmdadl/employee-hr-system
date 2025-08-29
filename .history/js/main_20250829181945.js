@@ -18,7 +18,6 @@ const DataService = {
         }
     },
 
-
     // --- GETTERS (Functions to read data) ---
 
     getEmployees: () => JSON.parse(localStorage.getItem('employees')),
@@ -27,8 +26,6 @@ const DataService = {
     getRequests: () => JSON.parse(localStorage.getItem('permissionRequests')),
     getSettings: () => JSON.parse(localStorage.getItem('hrSettings')),
     getApprovedLeaves: () => JSON.parse(localStorage.getItem('approvedLeaves')),
-
-
 
     // --- SETTERS (Functions to write/update data) ---
 
