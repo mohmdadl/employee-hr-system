@@ -11,8 +11,7 @@ function getWeekNumber(d) {
 }
 
 /**
- * يعيد التاريخ بصيغة YYYY-MM-DD
- * @param {Date} date - كائن التاريخ
+ * @param {Date} date 
  * @returns {string}
  */
 function getISODate(date = new Date()) {

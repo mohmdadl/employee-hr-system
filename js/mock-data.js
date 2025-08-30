@@ -4,8 +4,8 @@ const employees = [
 
     { id: 1, name: 'Amr Ahmed', department: 'IT', role: 'Employee', managerId: 2, monthlySalary: 5000, annualVacationDays: 21, email: 'employee@demo.com', password: '123' },
     { id: 5, name: 'Noha Adel', department: 'IT', role: 'Employee', managerId: 2, monthlySalary: 5200, annualVacationDays: 21, email: 'noha@demo.com', password: '123' },
-    
-   
+
+
     { id: 2, name: 'Fatima Ali', department: 'IT', role: 'Manager', monthlySalary: 9000, annualVacationDays: 21, email: 'manager@demo.com', password: '123' },
     { id: 3, name: 'Sayed Ibrahim', department: 'Operations', role: 'Security', email: 'security@demo.com', password: '123' },
     { id: 4, name: 'Ali Hassan', department: 'HR', role: 'HR', email: 'hr@demo.com', password: '123' }
@@ -13,7 +13,6 @@ const employees = [
 
 
 const attendanceRecords = [
-    // مثال لسجل قديم
     { id: 1, employeeId: 1, date: '2025-08-25', checkIn: '09:35', checkOut: '17:05', status: 'Late', minutesLate: 35, isWFH: false, isLeave: false, notes: '' },
 ];
 
@@ -33,7 +32,6 @@ const approvedLeaves = [
     { employeeId: 5, date: '2025-08-29', type: 'Annual Leave' }
 ];
 
-// إعدادات النظام الافتراضية
 const hrSettings = {
     latePenaltyTiers: {
         tier1: { from: 16, to: 30, penalty: 5 },   // 5% of daily wage
