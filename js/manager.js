@@ -1,515 +1,257 @@
-import * as commons from '../../common/commons.js';
+document.addEventListener("app-ready", () => {
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  if (!currentUser || currentUser.role !== "Manager") return;
 
-/**
- * demo.js — UI layer that uses commons.js for business logic.
- * - Loads/saves hrData to localStorage (key: "hrData")
- * - Renders Attendance, Approvals, Tasks, Workload, Reports
- * - Uses commons.* functions for calculations & validations
- */
+  let allEmployees = DataService.getEmployees();
+  let allRequests = DataService.getRequests();
+  let allTasks = DataService.getTasks();
 
-const STORAGE_KEY = "hrData";
-let store = null; // will hold the object loaded from storage or json
+  const createTaskModalEl = document.getElementById("createTaskModal");
+  const createTaskModal = new bootstrap.Modal(createTaskModalEl);
+  const rejectionModal = new bootstrap.Modal(
+    document.getElementById("rejectionModal")
+  );
 
-/* ---------- Data load/save ---------- */
-async function loadData() {
-    const local = localStorage.getItem(STORAGE_KEY);
-    if (local) {
-        try { return JSON.parse(local); } catch (e) { console.error("Invalid JSON in localStorage, clearing.", e); localStorage.removeItem(STORAGE_KEY); }
-    }
+  const approvalsTableBody = document.getElementById("approvalsTableBody");
+  const confirmRejectionBtn = document.getElementById("confirmRejectionBtn");
+  const createTaskForm = document.getElementById("createTaskForm");
+  const taskDeadlineInput = document.getElementById("taskDeadline");
+  const saveTaskBtn = createTaskForm.querySelector('button[type="submit"]');
 
-    // fetch initial JSON (first run)
-    try {
-        const res = await fetch('../../data/hr_app_data.json');
-        const json = await res.json();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(json));
-        return json;
-    } catch (err) {
-        console.error("Failed to fetch hr_app_data.json:", err);
-        // fallback skeleton
-        const fallback = {
-            employees: [],
-            attendanceRecords: [],
-            permissionRequests: [],
-            tasks: [],
-            config: {
-                workHours: { start: "09:00", end: "17:00" },
-                penalties: { late: [{ min: 16, max: 30, pctDailyWage: 0.05 }, { min: 31, max: 60, pctDailyWage: 0.10 }, { min: 61, max: 120, pctDailyWage: 0.20 }], absenceDailyPct: 1.0 },
-                overtime: { weekdayMultiplier: 1.25, weekendMultiplier: 1.5 },
-                caps: { monthlyDeductionPctOfSalary: 0.25 },
-                workweek: { weekendDays: ["Friday"] },
-                latePermissionsPerMonth: 2,
-                wfhPerWeekLimit: 2
-            }
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(fallback));
-        return fallback;
-    }
-}
+  const myTeamIds = allEmployees
+    .filter((e) => e.managerId === currentUser.id)
+    .map((e) => e.id);
+  let myTeamRequests = allRequests.filter((r) =>
+    myTeamIds.includes(r.employeeId)
+  );
+  let myTeamTasks = allTasks.filter((t) =>
+    t.assignees.some((assigneeId) => myTeamIds.includes(assigneeId))
+  );
 
-function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-}
+  function renderKPIs() {
+    const pendingRequestsCount = myTeamRequests.filter(
+      (r) => r.status === "Pending"
+    ).length;
+    document.getElementById("pendingApprovalsKpi").textContent =
+      pendingRequestsCount;
 
-/* ---------- Renderers ---------- */
+    const overdueTasksCount = myTeamTasks.filter(
+      (t) => t.status !== "Completed" && new Date(t.deadline) < new Date()
+    ).length;
+    document.getElementById("overdueTasksKpi").textContent = overdueTasksCount;
+  }
 
-function renderAttendance() {
-    const tbody = document.querySelector("#attendanceTable tbody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-    store.attendanceRecords.forEach(rec => {
-        const emp = store.employees.find(e => e.id === rec.employeeId);
-        const statusObj = commons.computeDailyStatus(rec, store.config || {});
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-      <td>${emp?.name || rec.employeeId}</td>
-      <td>${statusObj.status}</td>
-      <td>${rec.checkIn || 'N/A'}</td>
-      <td>${rec.checkOut || 'N/A'}</td>
-      <td>${statusObj.minutesLate ?? (rec.minutesLate ?? 0)}</td>
-      <td>${rec.notes || ''}</td>
-    `;
-        tbody.appendChild(tr);
-    });
-}
+  function renderApprovalsQueue() {
+    const tableBody = approvalsTableBody;
+    tableBody.innerHTML = (
+      <tr>
+        <td colspan="6" class="text-center">
+          Loading...
+        </td>
+      </tr>
+    );
 
-function renderApprovals() {
-    const tbody = document.querySelector("#approvalsTable tbody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-
-    let pending = store.permissionRequests.filter(r => r.status === "Pending");
-    // filter by currentFilter (tabs)
-    // active tab is tracked by UI classes; find active
-    const activeTab = document.querySelector("#approvalTabs .nav-link.active");
-    const filter = activeTab?.dataset?.type || "All";
-    if (filter !== "All") pending = pending.filter(r => r.type === filter);
-
-    document.getElementById("pendingCount").textContent = pending.length;
-
-    pending.forEach(r => {
-        const emp = store.employees.find(e => e.id === r.employeeId);
-        const tr = document.createElement("tr");
-        let rowClass = "";
-        switch (r.type) {
-            case "Absence": rowClass = "table-danger"; break;
-            case "WFH": rowClass = "table-primary"; break;
-            case "Late": rowClass = "table-warning"; break;
-            case "Overtime": rowClass = "table-success"; break;
-            case "DeadlineExtension": rowClass = "table-info"; break;
-        }
-        tr.className = rowClass;
-        tr.dataset.id = r.id;
-        tr.innerHTML = `
-      <td>${emp?.name || r.employeeId}</td>
-      <td>${r.type}</td>
-      <td>${r.payload?.requestedDate || '-'}</td>
-      <td>${r.status}</td>
-      <td>
-        <button class="btn btn-sm btn-success approve-btn me-1">Approve</button>
-        <button class="btn btn-sm btn-danger reject-btn">Reject</button>
-      </td>
-    `;
-        tbody.appendChild(tr);
-    });
-
-    // attach event handlers
-    tbody.querySelectorAll(".approve-btn").forEach(btn => {
-        btn.addEventListener("click", e => {
-            const id = parseInt(e.target.closest("tr").dataset.id);
-            const req = store.permissionRequests.find(r => r.id === id);
-            if (!req) return;
-            const v = commons.validatePermissionRequest(req, store.permissionRequests, store.config || {});
-            if (!v.ok) {
-                alert("Cannot approve: " + v.reason);
-                return;
-            }
-
-            // تحديث حالة الطلب للموافقة
-            req.status = "Approved";
-            req.managerComment = "Approved by manager";
-            req.decidedAt = new Date().toISOString();
-
-            // تحديث المهام المرتبطة بالطلب (تجنب ظهورها كمتأخرة)
-            if (req.taskIds?.length) {
-                req.taskIds.forEach(tid => {
-                    const task = store.tasks.find(t => (t.taskId || t.id) == tid);
-                    if (!task) return;
-
-                    switch (req.type) {
-                        case "Absence":
-                        case "WFH":
-                            const oldDeadline = new Date(task.deadline);
-                            oldDeadline.setDate(oldDeadline.getDate() + 1);
-                            task.deadline = oldDeadline.toISOString();
-                            break;
-                        case "Late":
-                            task.status = "InProgress";
-                            break;
-                    }
-                });
-            }
-
-            // تطبيق أي أعمال تجارية أخرى
-            commons.applyApproval(store, req);
-
-            saveData();
-            rerenderAll();
-            alert("✅ Request Approved (tasks updated)");
-        });
-    });
-
-
-    tbody.querySelectorAll(".reject-btn").forEach(btn => {
-        btn.addEventListener("click", e => {
-            const id = parseInt(e.target.closest("tr").dataset.id);
-            const req = store.permissionRequests.find(r => r.id === id);
-            if (!req) return;
-            const reason = prompt("Enter rejection reason:", "Rejected by manager");
-            req.status = "Rejected";
-            req.managerComment = reason || "Rejected";
-            req.decidedAt = new Date().toISOString();
-            saveData();
-            rerenderAll();
-            alert("❌ Request Rejected");
-        });
-    });
-}
-
-function renderOverdueTasks() {
-    const tbody = document.querySelector("#overdueTable tbody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-
-    const overdue = store.tasks.filter(t => commons.isTaskOverdue(t));
-
-    overdue.forEach(task => {
-        const assignees = (task.assignees || [])
-            .map(id => store.employees.find(e => e.id === id)?.name || id)
-            .join(", ");
-        const tr = document.createElement("tr");
-
-        tr.innerHTML = `
-            <td>${task.title}</td>
-            <td>${assignees}</td>
-            <td>${task.priority}</td>
-            <td>${task.deadline}</td>
-            <td>${task.status}</td>
-            <td>
-                <button class="btn btn-sm btn-outline-primary edit-task-btn" data-id="${task.taskId || task.id}">
-                    <i class="bi bi-pencil-square"></i>
-                </button>
+    setTimeout(() => {
+      const pendingRequests = myTeamRequests.filter(
+        (r) => r.status === "Pending"
+      );
+      if (pendingRequests.length === 0) {
+        tableBody.innerHTML = (
+          <tr>
+            <td colspan="6" class="text-center">
+              No pending requests. Great job!
             </td>
-        `;
-        tbody.appendChild(tr);
-    });
+          </tr>
+        );
+        return;
+      }
 
-    // attach edit handlers
-    tbody.querySelectorAll(".edit-task-btn").forEach(btn => {
-        btn.addEventListener("click", e => {
-            const taskId = e.target.closest("button").dataset.id;
-            openEditTaskModal(taskId);
-        });
-    });
-}
-
-
-function renderWorkload() {
-    const tbody = document.querySelector("#workloadTable tbody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-    store.employees.forEach(emp => {
-        const empTasks = store.tasks.filter(t => (t.assignees || []).includes(emp.id));
-        const total = empTasks.length;
-        const inProgress = empTasks.filter(t => ["InProgress", "In Progress"].includes(t.status)).length;
-        const overdue = empTasks.filter(t => commons.isTaskOverdue(t)).length;
-        const completed = empTasks.filter(t => t.status === "Completed").length;
+      tableBody.innerHTML = "";
+      pendingRequests.forEach((req) => {
+        const employee = allEmployees.find((e) => e.id === req.employeeId);
         const tr = document.createElement("tr");
+        tr.dataset.requestId = req.id;
         tr.innerHTML = `
-      <td>${emp.name}</td>
-      <td>${total}</td>
-      <td>${inProgress}</td>
-      <td>${overdue}</td>
-      <td>${completed}</td>
-    `;
-        tbody.appendChild(tr);
-    });
+                    <td>${employee.name}</td>
+                    <td><span class="badge text-bg-info">${req.type}</span></td>
+                    <td>${req.payload.requestedDate}</td>
+                    <td class="text-truncate" style="max-width: 250px;">${
+                      req.payload.reason || "--"
+                    }</td>
+                    <td>${req.createdAt}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-success approve-btn" title="Approve"><i class="bi bi-check-circle-fill"></i> Approve</button>
+                        <button class="btn btn-sm btn-danger reject-btn" title="Reject"><i class="bi bi-x-circle-fill"></i> Reject</button>
+                    </td>
+                `;
+        tableBody.appendChild(tr);
+      });
+    }, 250);
+  }
 
-    // update small badges
-    const teamSizeBadge = document.getElementById("teamSizeBadge");
-    if (teamSizeBadge) teamSizeBadge.textContent = `${store.employees.length} members`;
-}
+  function renderTeamTasks() {
+    const container = document.getElementById("teamTasksList");
+    container.innerHTML = "";
 
-function renderTasksTable() {
-    const tasksTBody = document.querySelector("#tasksTable tbody");
-    if (!tasksTBody) return;
-
-    tasksTBody.innerHTML = "";
-    store.tasks.forEach(task => {
-        const assignees = (task.assignees || [])
-            .map(id => store.employees.find(e => e.id === id)?.name || id)
-            .join(", ");
-        const tr = document.createElement("tr");
-        tr.dataset.taskId = task.taskId || task.id || ""; // camelCase مهم
-
-        tr.innerHTML = `
-      <td>${task.title}</td>
-      <td>${assignees}</td>
-      <td>${task.priority}</td>
-      <td>${task.deadline}</td>
-      <td>${task.status}</td>
-      <td><button class="btn btn-sm btn-outline-primary edit-task-btn">Edit</button></td>
-    `;
-        tasksTBody.appendChild(tr);
-    });
-
-    // attach edit handlers
-    tasksTBody.querySelectorAll(".edit-task-btn").forEach(btn => {
-        btn.addEventListener("click", e => {
-            const row = e.target.closest("tr");
-            const tid = row.dataset.taskId; // camelCase corrected
-            openEditTaskModal(tid);
-        });
-    });
-}
-
-
-
-
-/* ---------- Tasks: create & edit ---------- */
-
-function populateAssignees(selectEl) {
-    if (!selectEl) return;
-    selectEl.innerHTML = "";
-    store.employees.forEach(emp => {
-        const opt = document.createElement("option");
-        opt.value = emp.id;
-        opt.textContent = emp.name;
-        selectEl.appendChild(opt);
-    });
-}
-
-function setupCreateTaskForm() {
-    const form = document.getElementById("createTaskForm");
-    if (!form) return;
-    populateAssignees(document.getElementById("taskAssignees"));
-    form.addEventListener("submit", e => {
-        e.preventDefault();
-        const title = document.getElementById("taskTitle")?.value?.trim();
-        const priority = document.getElementById("taskPriority")?.value;
-        const deadline = document.getElementById("taskDeadline")?.value;
-        const assignees = Array.from(
-            document.getElementById("taskAssignees")?.selectedOptions || []
-        ).map(o => parseInt(o.value));
-
-        if (!title || !priority || !deadline || assignees.length === 0) {
-            alert("⚠️ Please fill all fields.");
-            return;
-        }
-
-        const newTask = {
-            taskId: Date.now().toString(),
-            title,
-            description: "",
-            priority,
-            deadline,
-            assignees,
-            status: "InProgress",
-            createdBy: "Manager",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            comments: []
-        };
-
-        store.tasks.push(newTask);
-        saveData();
-        rerenderAll();
-        form.reset();
-        alert("✅ Task created");
-    });
-}
-
-function openEditTaskModal(taskId) {
-    const task = store.tasks.find(t => (t.taskId || t.id || "").toString() === taskId.toString());
-    if (!task) return;
-    // fill modal fields
-    document.getElementById("editTaskId").value = task.taskId || task.id;
-    document.getElementById("editTaskTitle").value = task.title || "";
-    document.getElementById("editTaskPriority").value = task.priority || "Medium";
-    // ensure datetime-local value format: convert existing ISO to input's expected format
-    const dtInput = document.getElementById("editTaskDeadline");
-    if (task.deadline) {
-        // attempt to format to yyyy-mm-ddThh:mm
-        const d = new Date(task.deadline);
-        if (!isNaN(d)) {
-            const isoLocal = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-            dtInput.value = isoLocal;
-        } else {
-            dtInput.value = "";
-        }
-    } else dtInput.value = "";
-
-    document.getElementById("editTaskStatus").value = task.status || "InProgress";
-    document.getElementById("editTaskDescription").value = task.description || "";
-
-    populateAssignees(document.getElementById("editTaskAssignees"));
-    // select assignees
-    const select = document.getElementById("editTaskAssignees");
-    Array.from(select.options).forEach(opt => {
-        opt.selected = (task.assignees || []).includes(opt.value);
-    });
-
-    // show modal
-    const modalEl = document.getElementById("editTaskModal");
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
-}
-
-function setupEditTaskForm() {
-    const form = document.getElementById("editTaskForm");
-    if (!form) return;
-    form.addEventListener("submit", e => {
-        e.preventDefault();
-        const taskId = document.getElementById("editTaskId").value;
-        const task = store.tasks.find(t => (t.taskId || t.id || "").toString() === taskId.toString());
-        if (!task) return;
-
-        task.title = document.getElementById("editTaskTitle").value.trim();
-        task.priority = document.getElementById("editTaskPriority").value;
-        // read datetime-local and convert to ISO (browser gives local)
-        const dl = document.getElementById("editTaskDeadline").value;
-        if (dl) {
-            // dl is like "2025-08-27T14:30"
-            task.deadline = new Date(dl).toISOString();
-        }
-        task.status = document.getElementById("editTaskStatus").value;
-        task.description = document.getElementById("editTaskDescription").value;
-        task.assignees = Array.from(document.getElementById("editTaskAssignees").selectedOptions).map(o => o.value);
-        task.updatedAt = new Date().toISOString();
-
-        saveData();
-        rerenderAll();
-
-        // hide modal
-        const modalEl = document.getElementById("editTaskModal");
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-        alert("✅ Task updated");
-    });
-}
-
-/* ---------- Reports ---------- */
-
-function defaultReportMonthISO() {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    return `${y}-${m}`;
-}
-
-function renderTeamReports() {
-    const monthInput = document.getElementById("reportMonth");
-    const month = monthInput?.value || defaultReportMonthISO();
-
-    // attendance KPI
-    const aTbody = document.querySelector("#teamReportsTable tbody");
-    if (aTbody) {
-        aTbody.innerHTML = "";
-        store.employees.forEach(emp => {
-            const empAttendance = store.attendanceRecords.filter(a => a.employeeId === emp.id && a.date.startsWith(month));
-            const present = empAttendance.filter(a => {
-                const s = commons.computeDailyStatus(a, store.config || {});
-                return s.status === "Present" || s.status === "Present(WFH)";
-            }).length;
-            const late = empAttendance.filter(a => commons.computeDailyStatus(a, store.config || {}).status === "Late").length;
-            const absent = empAttendance.filter(a => commons.computeDailyStatus(a, store.config || {}).status === "Absent").length;
-            const wfh = empAttendance.filter(a => commons.computeDailyStatus(a, store.config || {}).status === "Present(WFH)").length;
-
-            const tr = document.createElement("tr");
-            tr.innerHTML = `<td>${emp.name}</td><td>${present}</td><td>${late}</td><td>${absent}</td><td>${wfh}</td>`;
-            aTbody.appendChild(tr);
-        });
+    if (myTeamTasks.length === 0) {
+      container.innerHTML = (
+        <p class="text-center text-muted">
+          No tasks assigned to your team yet. Click "Create New Task" to get
+          started.
+        </p>
+      );
+      return;
     }
 
-    // payroll impact
-    const pTbody = document.querySelector("#payrollImpactTable tbody");
-    if (pTbody) {
-        pTbody.innerHTML = "";
-        const impacts = commons.computeMonthlyPayrollImpact(store, month, store.config || {});
-        impacts.forEach(row => {
-            const emp = store.employees.find(e => e.id === row.employeeId);
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-        <td>${emp?.name || row.employeeId}</td>
-        <td>${(row.latePenalty || 0).toFixed(2)}</td>
-        <td>${(row.absencePenalty || 0).toFixed(2)}</td>
-        <td>${(row.taskPenalty || 0).toFixed(2)}</td>
-        <td>${(row.overtimePay || 0).toFixed(2)}</td>
-        <td>${(row.bonus || 0).toFixed(2)}</td>
-        <td>${row.capApplied ? "Yes" : "No"}</td>
-      `;
-            pTbody.appendChild(tr);
-        });
+    myTeamTasks.forEach((task) => {
+      const assignees = task.assignees
+        .map((id) => allEmployees.find((e) => e.id === id).name)
+        .join(", ");
+      const isOverdue =
+        new Date(task.deadline) < new Date() && task.status !== "Completed";
+      const card = document.createElement("div");
+      card.className = "col-md-6 col-lg-4 mb-3";
+      card.innerHTML = `
+            <div class="card ${isOverdue ? "border-danger" : ""}">
+                <div class="card-body">
+                    <h5 class="card-title">${task.title}</h5>
+                    <h6 class="card-subtitle mb-2 text-body-secondary">Priority: ${
+                      task.priority
+                    }</h6>
+                    <p class="card-text mb-1"><strong>Assignees:</strong> ${assignees}</p>
+                    <p class="card-text"><strong>Deadline:</strong> <span class="${
+                      isOverdue ? "text-danger" : ""
+                    }">${new Date(task.deadline).toLocaleString()}</span></p>
+                    <p><strong>Status:</strong> ${task.status}</p>
+                </div>
+            </div>
+            `;
+      container.appendChild(card);
+    });
+  }
+
+  function populateCreateTaskForm() {
+    const assigneesContainer = document.getElementById("taskAssignees");
+    const teamMembers = allEmployees.filter((e) => myTeamIds.includes(e.id));
+    assigneesContainer.innerHTML = "";
+    teamMembers.forEach((member) => {
+      assigneesContainer.innerHTML += `
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="${member.id}" id="assignee-${member.id}">
+                <label class="form-check-label" for="assignee-${member.id}">
+                    ${member.name}
+                </label>
+            </div>
+            `;
+    });
+  }
+
+  function handleApproval(requestId) {
+    const requestIndex = allRequests.findIndex((r) => r.id === requestId);
+    if (requestIndex === -1) return;
+
+    allRequests[requestIndex].status = "Approved";
+    allRequests[requestIndex].managerComment = "Approved";
+    allRequests[requestIndex].decidedAt = getISODate();
+    DataService.saveRequests(allRequests);
+
+    myTeamRequests = allRequests.filter((r) =>
+      myTeamIds.includes(r.employeeId)
+    );
+    renderKPIs();
+    renderApprovalsQueue();
+    showToast("Request approved successfully!", "success");
+  }
+
+  function handleRejection(requestId, reason) {
+    if (!reason) {
+      showToast("Rejection reason is mandatory.", "danger");
+      return;
     }
 
-    // update badge for current month
-    const monthBadge = document.getElementById("currentMonthBadge");
-    if (monthBadge) monthBadge.textContent = month;
-}
+    const requestIndex = allRequests.findIndex((r) => r.id === requestId);
+    if (requestIndex === -1) return;
 
-/* ---------- UI wiring & tabs ---------- */
+    allRequests[requestIndex].status = "Rejected";
+    allRequests[requestIndex].managerComment = reason;
+    allRequests[requestIndex].decidedAt = getISODate();
+    DataService.saveRequests(allRequests);
 
-function setupApprovalTabs() {
-    document.querySelectorAll("#approvalTabs .nav-link").forEach(tab => {
-        tab.addEventListener("click", e => {
-            document.querySelectorAll("#approvalTabs .nav-link").forEach(t => t.classList.remove("active"));
-            e.target.classList.add("active");
-            renderApprovals();
-        });
-    });
-}
+    myTeamRequests = allRequests.filter((r) =>
+      myTeamIds.includes(r.employeeId)
+    );
+    renderKPIs();
+    renderApprovalsQueue();
+    rejectionModal.hide();
+    showToast("Request rejected.", "info");
+  }
 
-function setupReportControls() {
-    const monthInput = document.getElementById("reportMonth");
-    if (monthInput) monthInput.value = defaultReportMonthISO();
-    const refreshBtn = document.getElementById("refreshReports");
-    if (refreshBtn) refreshBtn.addEventListener("click", () => renderTeamReports());
-    if (monthInput) monthInput.addEventListener("change", () => renderTeamReports());
-}
+  document.querySelectorAll('.card-link[href^="#"]').forEach((link) => {});
+  approvalsTableBody.addEventListener("click", (e) => {});
+  confirmRejectionBtn.addEventListener("click", () => {});
 
-/* ---------- Rerender convenience ---------- */
-function rerenderAll() {
-    renderAttendance();
-    renderApprovals();
-    renderOverdueTasks();
-    renderWorkload();
-    renderTasksTable();
-    renderTeamReports();
-}
+  createTaskForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const title = document.getElementById("taskTitle").value;
+    const description = document.getElementById("taskDescription").value;
+    const priority = document.getElementById("taskPriority").value;
+    const deadline = document.getElementById("taskDeadline").value;
+    const selectedAssignees = Array.from(
+      document.querySelectorAll("#taskAssignees input:checked")
+    ).map((input) => parseInt(input.value));
 
-/* ---------- Init ---------- */
-(async function init() {
-    store = await loadData();
+    if (selectedAssignees.length === 0) {
+      showToast("You must assign the task to at least one employee.", "danger");
+      return;
+    }
 
-    // ensure store.config exists
-    store.config = store.config || {
-        workHours: { start: "09:00", end: "17:00" },
-        penalties: { late: [{ min: 16, max: 30, pctDailyWage: 0.05 }, { min: 31, max: 60, pctDailyWage: 0.10 }, { min: 61, max: 120, pctDailyWage: 0.20 }], absenceDailyPct: 1.0 },
-        overtime: { weekdayMultiplier: 1.25, weekendMultiplier: 1.5 },
-        caps: { monthlyDeductionPctOfSalary: 0.25 },
-        workweek: { weekendDays: ["Friday"] },
-        latePermissionsPerMonth: 2,
-        wfhPerWeekLimit: 2
+    const newTask = {
+      taskId: Date.now(),
+      title,
+      description,
+      priority,
+      deadline,
+      assignees: selectedAssignees,
+      status: "Not Started",
+      createdBy: currentUser.id,
+      createdAt: getISODate(),
     };
+    allTasks.push(newTask);
+    DataService.saveTasks(allTasks);
 
-    // render everything
-    renderAttendance();
-    renderApprovals();
-    renderOverdueTasks();
-    renderWorkload();
-    renderTasksTable();
-    setupCreateTaskForm();
-    setupEditTaskForm();
-    setupApprovalTabs();
-    setupReportControls();
-    renderTeamReports();
-})();
+    myTeamTasks = allTasks.filter((t) =>
+      t.assignees.some((id) => myTeamIds.includes(id))
+    );
+    renderTeamTasks();
+    renderKPIs();
+
+    createTaskModal.hide();
+    createTaskForm.reset();
+    taskDeadlineInput.classList.remove("is-invalid");
+    saveTaskBtn.disabled = false;
+    showToast("Task created successfully!", "success");
+  });
+
+  taskDeadlineInput.addEventListener("input", () => {
+    const selectedDate = new Date(taskDeadlineInput.value);
+    const now = new Date();
+    now.setSeconds(0, 0);
+
+    if (selectedDate < now) {
+      taskDeadlineInput.classList.add("is-invalid");
+      saveTaskBtn.disabled = true;
+    } else {
+      taskDeadlineInput.classList.remove("is-invalid");
+      saveTaskBtn.disabled = false;
+    }
+  });
+
+  function init() {
+    renderKPIs();
+    renderApprovalsQueue();
+    renderTeamTasks();
+    populateCreateTaskForm();
+  }
+
+  init();
+});
