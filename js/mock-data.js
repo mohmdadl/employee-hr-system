@@ -19,8 +19,14 @@ const attendanceRecords = [
 const tasks = [
     { taskId: 1, title: 'Deploy new server', description: 'Deploy the new staging server for project X', priority: 'High', deadline: '2025-08-29T17:00:00', assignees: [1, 5], status: 'In Progress' },
     { taskId: 2, title: 'Update documentation', description: 'Update the user guide for the new release', priority: 'Medium', deadline: '2025-09-05T17:00:00', assignees: [1], status: 'Not Started' },
-    { taskId: 3, title: 'Review quarterly budget', description: 'Review and approve the Q3 budget proposal', priority: 'Critical', deadline: '2025-08-27T12:00:00', assignees: [2], status: 'Not Started' }
+    { taskId: 3, title: 'Review quarterly budget', description: 'Review and approve the Q3 budget proposal', priority: 'Critical', deadline: '2025-08-27T12:00:00', assignees: [2], status: 'Not Started' },
+
+    { taskId: 4, title: 'Client meeting preparation', description: 'Prepare slides and notes for client presentation', priority: 'High', deadline: '2025-08-30T10:00:00', assignees: [1], status: 'Not Started' },
+    { taskId: 5, title: 'Code review', description: 'Review pull requests from team members', priority: 'Medium', deadline: '2025-08-31T15:00:00', assignees: [1, 3], status: 'In Progress' },
+    { taskId: 6, title: 'Team training session', description: 'Conduct internal training for new tools', priority: 'Low', deadline: '2025-09-02T14:00:00', assignees: [1], status: 'Not Started' },
+    { taskId: 7, title: 'Bug fixes', description: 'Fix reported issues from QA team', priority: 'Critical', deadline: '2025-08-29T18:00:00', assignees: [1, 4], status: 'In Progress' }
 ];
+
 
 const permissionRequests = [
     { id: 1, employeeId: 5, type: 'WFH', payload: { requestedDate: '2025-08-28', reason: 'Plumber appointment in the morning' }, status: 'Pending', managerComment: '', createdAt: '2025-08-26' },
