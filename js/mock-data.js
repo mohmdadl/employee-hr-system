@@ -24,7 +24,8 @@ const tasks = [
     { taskId: 4, title: 'Client meeting preparation', description: 'Prepare slides and notes for client presentation', priority: 'High', deadline: '2025-08-30T10:00:00', assignees: [1], status: 'Not Started' },
     { taskId: 5, title: 'Code review', description: 'Review pull requests from team members', priority: 'Medium', deadline: '2025-08-31T15:00:00', assignees: [1, 3], status: 'In Progress' },
     { taskId: 6, title: 'Team training session', description: 'Conduct internal training for new tools', priority: 'Low', deadline: '2025-09-02T14:00:00', assignees: [1], status: 'Not Started' },
-    { taskId: 7, title: 'Bug fixes', description: 'Fix reported issues from QA team', priority: 'Critical', deadline: '2025-08-29T18:00:00', assignees: [1, 4], status: 'In Progress' }
+    { taskId: 7, title: 'Bug fixes', description: 'Fix reported issues from QA team', priority: 'Critical', deadline: '2025-08-29T18:00:00', assignees: [1, 4], status: 'In Progress' },
+    { taskId: 8, title: 'Bug fixes', description: 'Fix reported issues from QA team', priority: 'Critical', deadline: '2025-08-29T18:00:00', assignees: [1, 4], status: 'In Progress' }
 ];
 
 
