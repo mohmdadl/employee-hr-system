@@ -22,12 +22,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const thisMonth = new Date().getMonth();
         const thisWeek = getWeekNumber(new Date());
 
-        // --- Late Permissions Used ---
-        const latePermissionsThisMonth = myRequests.filter(r => r.type === 'Late' && r.status === 'Approved' && new Date(r.payload.requestedDate).getMonth() === thisMonth).length;
+        // --- Late Permissions This Month ---
+        const latePermissionsThisMonth = myRequests
+            .filter(r => r.type === 'Late' && r.status === 'Approved' && new Date(r.payload.requestedDate).getMonth() === thisMonth)
+            .length;
         document.getElementById('latePermissionsKpi').textContent = `${latePermissionsThisMonth} / ${AppConfig.LATE_PERMISSION_QUOTA_PER_MONTH}`;
 
         // --- WFH This Week ---
-        const wfhThisWeek = myRequests.filter(r => r.type === 'WFH' && r.status === 'Approved' && getWeekNumber(new Date(r.payload.requestedDate)) === thisWeek).length;
+        const wfhThisWeek = myRequests
+            .filter(r => r.type === 'WFH' && r.status === 'Approved' && getWeekNumber(new Date(r.payload.requestedDate)) === thisWeek)
+            .length;
         document.getElementById('wfhKpi').textContent = `${wfhThisWeek} / ${AppConfig.WFH_QUOTA_PER_WEEK}`;
 
         // --- Pending Requests ---
@@ -36,12 +40,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Est. Deductions (Salary Impact) ---
         if (!payrollImpact) payrollImpact = calculatePayrollImpact();
-        const monthlySalary = currentUser.monthlySalary || 5000; // ا
-        const totalPenaltyPercentage = payrollImpact.latePenalty + payrollImpact.taskPenalty;
+
+        const monthlySalary = currentUser.monthlySalary || 5000;
+
+        let totalPenaltyPercentage = payrollImpact.latePenalty + payrollImpact.taskPenalty;
+
+        const unapprovedWFH = myRequests.filter(r => r.type === 'WFH' && r.status !== 'Approved').length;
+        const wfhPenaltyPercent = unapprovedWFH * 2;
+        totalPenaltyPercentage += wfhPenaltyPercent;
+
+        totalPenaltyPercentage = Math.min(totalPenaltyPercentage, hrSettings.deductionCap);
+
         const estimatedDeductions = (totalPenaltyPercentage / 100) * monthlySalary;
 
         document.getElementById('deductionsKpi').textContent = `EGP ${estimatedDeductions.toFixed(2)}`;
     }
+
 
 
     function renderAttendance() {
