@@ -1,52 +1,63 @@
-// js/employee.js (Final, Clean, and Blocked-Out Version)
+// js/employee.js (Final with Cancel Request Feature)
 
 document.addEventListener('DOMContentLoaded', () => {
-    // =================================================================
-    // --- 1. SCRIPT INITIALIZATION & STATE ---
-    // =================================================================
     console.log("DOM ready. Initializing Employee Dashboard script...");
 
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser || currentUser.role !== 'Employee') {
         console.error("Authentication Error: Not an employee or no user logged in. Stopping script.");
-        return; // Stop execution if not a valid employee
+        return;
     }
 
-    // Modal Instance
-    const taskDetailsModal = new bootstrap.Modal(document.getElementById('taskDetailsModal'));
 
-    // Application State (The single source of truth for this page)
     let myAttendance = DataService.getAttendance().filter(r => r.employeeId === currentUser.id);
     let myTasks = DataService.getTasks().filter(t => t.assignees.includes(currentUser.id));
     let myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
-    let payrollImpact = null; // To be used on Day 5/6
+    let payrollImpact = null;
 
     console.log(`Initialized with ${myAttendance.length} attendance records, ${myTasks.length} tasks, and ${myRequests.length} requests for ${currentUser.name}.`);
 
-
-    // =================================================================
-    // --- 2. RENDER FUNCTIONS (Update the UI) ---
-    // =================================================================
-
-    /** Renders all the Key Performance Indicator (KPI) cards. */
+    // --- RENDER FUNCTIONS ---
     function renderKPIs() {
         const thisMonth = new Date().getMonth();
-        const thisYear = new Date().getFullYear();
         const thisWeek = getWeekNumber(new Date());
 
-        const latePermissionsThisMonth = myRequests.filter(r => r.type === 'Late' && r.status === 'Approved' && new Date(r.payload.requestedDate).getMonth() === thisMonth).length;
+        // --- Late Permissions This Month ---
+        const latePermissionsThisMonth = myRequests
+            .filter(r => r.type === 'Late' && r.status === 'Approved' && new Date(r.payload.requestedDate).getMonth() === thisMonth)
+            .length;
         document.getElementById('latePermissionsKpi').textContent = `${latePermissionsThisMonth} / ${AppConfig.LATE_PERMISSION_QUOTA_PER_MONTH}`;
 
-        const wfhThisWeek = myRequests.filter(r => r.type === 'WFH' && r.status === 'Approved' && getWeekNumber(new Date(r.payload.requestedDate)) === thisWeek).length;
+        // --- WFH This Week ---
+        const wfhThisWeek = myRequests
+            .filter(r => r.type === 'WFH' && r.status === 'Approved' && getWeekNumber(new Date(r.payload.requestedDate)) === thisWeek)
+            .length;
         document.getElementById('wfhKpi').textContent = `${wfhThisWeek} / ${AppConfig.WFH_QUOTA_PER_WEEK}`;
-        
+
+        // --- Pending Requests ---
         const pendingRequestsCount = myRequests.filter(r => r.status === 'Pending').length;
         document.getElementById('pendingRequestsKpi').textContent = pendingRequestsCount;
 
-        // Note: Payroll KPI is intentionally left out for Day 2. It will be added on Day 5/6.
+        // --- Est. Deductions (Salary Impact) ---
+        if (!payrollImpact) payrollImpact = calculatePayrollImpact();
+
+        const monthlySalary = currentUser.monthlySalary || 5000;
+
+        let totalPenaltyPercentage = payrollImpact.latePenalty + payrollImpact.taskPenalty;
+
+        const unapprovedWFH = myRequests.filter(r => r.type === 'WFH' && r.status !== 'Approved').length;
+        const wfhPenaltyPercent = unapprovedWFH * 2;
+        totalPenaltyPercentage += wfhPenaltyPercent;
+
+        totalPenaltyPercentage = Math.min(totalPenaltyPercentage, hrSettings.deductionCap);
+
+        const estimatedDeductions = (totalPenaltyPercentage / 100) * monthlySalary;
+
+        document.getElementById('deductionsKpi').textContent = `EGP ${estimatedDeductions.toFixed(2)}`;
     }
 
-    /** Renders the user's attendance history table. */
+
+
     function renderAttendance() {
         const tableBody = document.getElementById('attendanceTableBody');
         tableBody.innerHTML = '';
@@ -67,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    /** Renders the user's assigned tasks as cards. */
     function renderTasks() {
         const listContainer = document.getElementById('tasksList');
         listContainer.innerHTML = '';
@@ -93,14 +103,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    /** Renders the dynamic form for creating new requests. */
     function renderRequestForm() {
-        // This function will be called once to set up the initial event listener.
         const requestTypeSelect = document.getElementById('requestType');
         requestTypeSelect.addEventListener('change', handleRequestTypeChange);
     }
 
-    /** Renders the user's request history list. */
     function renderRequestsHistory() {
         const historyList = document.getElementById('requestsHistoryList');
         historyList.innerHTML = '';
@@ -127,12 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
-    // =================================================================
-    // --- 3. HANDLER FUNCTIONS (Handle user actions) ---
-    // =================================================================
-
-    /** Handles the submission of the new request form. */
+    // --- HANDLER FUNCTIONS ---
     function handleRequestSubmit(e) {
         e.preventDefault();
         const allRequests = DataService.getRequests();
@@ -152,23 +154,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         allRequests.push(newRequest);
         DataService.saveRequests(allRequests);
-        myRequests = allRequests.filter(r => r.employeeId === currentUser.id); // Refresh state
-        
-        renderRequestsHistory(); // Re-render UI
+        myRequests = allRequests.filter(r => r.employeeId === currentUser.id);
+
+        renderRequestsHistory();
         renderKPIs();
         showToast('Request submitted successfully!', 'success');
-        
-        e.target.reset(); // Reset the form
+
+        e.target.reset();
         document.getElementById('dynamicFieldsContainer').innerHTML = '';
     }
 
-    /** Handles changes in the request type dropdown to show correct fields. */
     function handleRequestTypeChange() {
         const requestTypeSelect = document.getElementById('requestType');
         const dynamicFieldsContainer = document.getElementById('dynamicFieldsContainer');
         const submitBtn = document.getElementById('submitRequestBtn');
         const type = requestTypeSelect.value;
-        
+
         dynamicFieldsContainer.innerHTML = '';
         submitBtn.disabled = false;
 
@@ -178,11 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         fieldsHTML += `<div class="mb-3"><label for="requestReason" class="form-label">Reason</label><textarea class="form-control" id="requestReason" rows="2" required></textarea></div>`;
         dynamicFieldsContainer.innerHTML = fieldsHTML;
-        
+
         document.getElementById('requestDate').addEventListener('change', handleRequestDateChange);
     }
 
-    /** Handles changes in the request date to check for quotas. */
     function handleRequestDateChange() {
         const type = document.getElementById('requestType').value;
         const selectedDate = new Date(this.value);
@@ -191,42 +191,115 @@ document.addEventListener('DOMContentLoaded', () => {
         if (type === 'WFH') {
             const week = getWeekNumber(selectedDate);
             const wfhThisWeek = myRequests.filter(r => r.type === 'WFH' && r.status === 'Approved' && getWeekNumber(new Date(r.payload.requestedDate)) === week).length;
-            if (wfhThisWeek >= AppConfig.WFH_QUOTA_PER_WEEK) {
-                showToast(`WFH quota (${AppConfig.WFH_QUOTA_PER_WEEK}/week) exceeded for the selected week.`, 'danger');
-                submitBtn.disabled = true;
-            } else {
-                submitBtn.disabled = false;
-            }
+            submitBtn.disabled = wfhThisWeek >= AppConfig.WFH_QUOTA_PER_WEEK;
+            if (wfhThisWeek >= AppConfig.WFH_QUOTA_PER_WEEK) showToast(`WFH quota exceeded for this week.`, 'danger');
         }
     }
 
-
-    // =================================================================
-    // --- 4. EVENT LISTENERS (Wire up the UI) ---
-    // =================================================================
-
+    // --- EVENT LISTENERS ---
     document.getElementById('requestForm').addEventListener('submit', handleRequestSubmit);
+    const taskDetailsModal = new bootstrap.Modal(document.getElementById('taskDetailsModal'));
 
-    // Note: Other event listeners for tasks, deleting requests, etc., will be added here in later tasks.
+    const taskDetailsModalElement = document.getElementById('taskDetailsModal');
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('view-task-btn')) {
+            const taskId = e.target.getAttribute('data-task-id');
+            const task = myTasks.find(t => t.taskId == taskId);
+            if (task && taskDetailsModalElement) {
+                document.getElementById('taskDetailTitle').textContent = task.title;
+                document.getElementById('taskDetailDescription').textContent = task.description || 'No description provided.';
+                document.getElementById('taskDetailPriority').textContent = task.priority;
+                document.getElementById('taskDetailDeadline').textContent = new Date(task.deadline).toLocaleString();
+                document.getElementById('taskDetailStatus').textContent = task.status;
+                taskDetailsModal.show();
+            }
+        }
+    });
+
+    // --- Cancel Request Handler ---
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('.delete-request-btn')) {
+            const btn = e.target.closest('.delete-request-btn');
+            const requestId = Number(btn.dataset.requestId);
+            if (!requestId) return;
+
+            myRequests = myRequests.filter(r => r.id !== requestId);
+            const allRequests = DataService.getRequests().filter(r => r.id !== requestId);
+            DataService.saveRequests(allRequests);
+
+            renderRequestsHistory();
+            renderKPIs();
+            showToast('Request canceled successfully!', 'success');
+        }
+    });
+    // --- Payroll Impact Calculation ---
+    function calculatePayrollImpact() {
+        const today = new Date();
+        const thisMonth = today.getMonth();
+        let latePenalty = 0;
+        let taskPenalty = 0;
+
+        myAttendance.forEach(rec => {
+            if (new Date(rec.date).getMonth() === thisMonth && rec.minutesLate > 0) {
+                const tiers = DataService.getSettings().latePenaltyTiers || { tier1: { from: 1, to: 15, penalty: 1 }, tier2: { from: 16, to: 30, penalty: 2 }, tier3: { from: 31, to: 1000, penalty: 5 } };
+                if (rec.minutesLate >= tiers.tier1.from && rec.minutesLate <= tiers.tier1.to) latePenalty += tiers.tier1.penalty;
+                else if (rec.minutesLate >= tiers.tier2.from && rec.minutesLate <= tiers.tier2.to) latePenalty += tiers.tier2.penalty;
+                else if (rec.minutesLate >= tiers.tier3.from && rec.minutesLate <= tiers.tier3.to) latePenalty += tiers.tier3.penalty;
+            }
+        });
+
+        myTasks.forEach(task => {
+            const deadline = new Date(task.deadline);
+            if (deadline.getMonth() === thisMonth && task.status !== 'Completed') {
+                const taskPenalties = DataService.getSettings().taskPenalty || { High: 2, Medium: 1, Low: 0.5, Critical: 3 };
+                taskPenalty += taskPenalties[task.priority] || 0;
+            }
+        });
+
+        return { latePenalty, taskPenalty };
+    }
+
+    function renderPayrollImpact() {
+        const container = document.getElementById('payrollImpactDetails');
+        if (!container) return;
+
+        if (!payrollImpact) {
+            payrollImpact = calculatePayrollImpact();
+        }
+
+        const settings = DataService.getSettings();
+        const monthlySalary = settings.monthlySalary || 5000;
+        const lateAmount = ((payrollImpact.latePenalty / 100) * monthlySalary).toFixed(2);
+        const taskAmount = ((payrollImpact.taskPenalty / 100) * monthlySalary).toFixed(2);
+
+        container.innerHTML = `
+        <div class="mb-3">
+            <strong>Total Late Penalty:</strong> ${payrollImpact.latePenalty}% (~$${lateAmount})
+            <div class="progress">
+                <div class="progress-bar bg-warning" role="progressbar" style="width: ${payrollImpact.latePenalty}%;" aria-valuenow="${payrollImpact.latePenalty}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+        <div class="mb-3">
+            <strong>Total Task Penalty:</strong> ${payrollImpact.taskPenalty}% (~$${taskAmount})
+            <div class="progress">
+                <div class="progress-bar bg-danger" role="progressbar" style="width: ${payrollImpact.taskPenalty}%;" aria-valuenow="${payrollImpact.taskPenalty}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+    `;
+    }
 
 
-    // =================================================================
-    // --- 5. INITIALIZATION ---
-    // =================================================================
 
-    /** The main function for this page. Called once when the script starts. */
+    // --- INITIALIZATION ---
     function init() {
-        // For Day 2, we are not calculating payroll. This will be activated on Day 5/6.
-        // payrollImpact = SalaryCalculator.calculateMonthlyImpact(...);
-        
         renderKPIs();
         renderAttendance();
         renderTasks();
         renderRequestForm();
         renderRequestsHistory();
+        renderPayrollImpact();
+
     }
 
-    // Run the app!
     init();
-
-}); // End of DOMContentLoaded
+});

@@ -148,7 +148,6 @@
         </div>
     </div>
 
-    <!-- Add this modal to the end of employee.html -->
     <!-- Task Details Modal -->
     <div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel"
         aria-hidden="true">
@@ -159,8 +158,13 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="taskDetailsModalBody">
-                    <!-- Content will be injected by JS -->
+                    <p><strong>Title:</strong> <span id="taskDetailTitle"></span></p>
+                    <p><strong>Description:</strong> <span id="taskDetailDescription"></span></p>
+                    <p><strong>Priority:</strong> <span id="taskDetailPriority"></span></p>
+                    <p><strong>Deadline:</strong> <span id="taskDetailDeadline"></span></p>
+                    <p><strong>Status:</strong> <span id="taskDetailStatus"></span></p>
                 </div>
+
                 <div class="modal-footer" id="taskDetailsModalFooter">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
