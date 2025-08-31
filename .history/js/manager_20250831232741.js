@@ -177,7 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
         taskDeadlineInput.classList.remove("is-invalid");
         saveTaskBtn.disabled = false;
         showToast("Task created successfully!", "success");
-    }
 
 
     document.querySelectorAll('.card-link[href^="#"]').forEach(link => {
@@ -226,7 +225,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-
+    // =================================================================
+    // --- 5. INITIALIZATION ---
+    // =================================================================
 
     function init() {
         renderKPIs();
