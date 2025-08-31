@@ -23,15 +23,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const thisMonth = new Date().getMonth();
         const thisWeek = getWeekNumber(new Date());
 
+        // --- Late Permissions Used ---
         const latePermissionsThisMonth = myRequests.filter(r => r.type === 'Late' && r.status === 'Approved' && new Date(r.payload.requestedDate).getMonth() === thisMonth).length;
         document.getElementById('latePermissionsKpi').textContent = `${latePermissionsThisMonth} / ${AppConfig.LATE_PERMISSION_QUOTA_PER_MONTH}`;
 
+        // --- WFH This Week ---
         const wfhThisWeek = myRequests.filter(r => r.type === 'WFH' && r.status === 'Approved' && getWeekNumber(new Date(r.payload.requestedDate)) === thisWeek).length;
         document.getElementById('wfhKpi').textContent = `${wfhThisWeek} / ${AppConfig.WFH_QUOTA_PER_WEEK}`;
 
+        // --- Pending Requests ---
         const pendingRequestsCount = myRequests.filter(r => r.status === 'Pending').length;
         document.getElementById('pendingRequestsKpi').textContent = pendingRequestsCount;
+
+        // --- Est. Deductions (Salary Impact) ---
+        if (!payrollImpact) payrollImpact = calculatePayrollImpact();
+        const monthlySalary = currentUser.monthlySalary || 5000; // افتراضي لو مش معرف
+        const totalPenaltyPercentage = payrollImpact.latePenalty + payrollImpact.taskPenalty;
+        const estimatedDeductions = (totalPenaltyPercentage / 100) * monthlySalary;
+
+        document.getElementById('deductionsKpi').textContent = `EGP ${estimatedDeductions.toFixed(2)}`;
     }
+
 
     function renderAttendance() {
         const tableBody = document.getElementById('attendanceTableBody');
