@@ -14,14 +14,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const createTaskModal = new bootstrap.Modal(document.getElementById('createTaskModal'));
     const rejectionModal = new bootstrap.Modal(document.getElementById('rejectionModal'));
 
-
+    // Element References
     const approvalsTableBody = document.getElementById('approvalsTableBody');
     const confirmRejectionBtn = document.getElementById('confirmRejectionBtn');
     const createTaskForm = document.getElementById('createTaskForm');
     const taskDeadlineInput = document.getElementById('taskDeadline');
     const saveTaskBtn = createTaskForm.querySelector('button[type="submit"]');
 
-
+    // Application State
     let allEmployees = DataService.getEmployees();
     let allRequests = DataService.getRequests();
     let allTasks = DataService.getTasks();
@@ -30,7 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let myTeamTasks = allTasks.filter(t => t.assignees.some(assigneeId => myTeamIds.includes(assigneeId)));
 
 
+    // =================================================================
+    // --- 2. RENDER FUNCTIONS (Update the UI) ---
+    // =================================================================
 
+    /** Renders the Key Performance Indicator (KPI) cards. */
     function renderKPIs() {
         const pendingRequestsCount = myTeamRequests.filter(r => r.status === 'Pending').length;
         document.getElementById('pendingApprovalsKpi').textContent = pendingRequestsCount;
@@ -39,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('overdueTasksKpi').textContent = overdueTasksCount;
     }
 
-
+    /** Renders the approvals queue table with pending requests. */
     function renderApprovalsQueue() {
         approvalsTableBody.innerHTML = `<tr><td colspan="6" class="text-center">Loading...</td></tr>`;
 
@@ -70,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 250);
     }
 
-
+    /** Renders the team's tasks as cards. */
     function renderTeamTasks() {
         const container = document.getElementById('teamTasksList');
         container.innerHTML = "";
@@ -98,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
+    /** Populates the employee checkboxes in the "Create Task" modal. */
     function populateCreateTaskForm() {
         const assigneesContainer = document.getElementById("taskAssignees");
         const teamMembers = allEmployees.filter(e => myTeamIds.includes(e.id));
@@ -114,7 +118,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    // =================================================================
+    // --- 3. HANDLER FUNCTIONS (Handle user actions) ---
+    // =================================================================
 
+    /** Handles the logic for approving a request. */
     function handleApproval(requestId) {
         const requestIndex = allRequests.findIndex(r => r.id === requestId);
         if (requestIndex === -1) return;
@@ -130,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Request approved successfully!', 'success');
     }
 
-
+    /** Handles the logic for rejecting a request. */
     function handleRejection(requestId, reason) {
         if (!reason) {
             showToast('Rejection reason is mandatory.', 'danger');
@@ -151,6 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Request rejected.', 'info');
     }
 
+    /** Handles the submission of the new task form. */
     function handleTaskCreation(e) {
         e.preventDefault();
         const title = document.getElementById("taskTitle").value;
@@ -179,6 +188,9 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Task created successfully!", "success");
     }
 
+    // =================================================================
+    // --- 4. EVENT LISTENERS (Wire up the UI) ---
+    // =================================================================
 
     document.querySelectorAll('.card-link[href^="#"]').forEach(link => {
         link.addEventListener('click', e => {
@@ -226,7 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-
+    // =================================================================
+    // --- 5. INITIALIZATION ---
+    // =================================================================
 
     function init() {
         renderKPIs();

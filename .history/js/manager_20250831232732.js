@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Request approved successfully!', 'success');
     }
 
-
+    /** Handles the logic for rejecting a request. */
     function handleRejection(requestId, reason) {
         if (!reason) {
             showToast('Rejection reason is mandatory.', 'danger');
@@ -151,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Request rejected.', 'info');
     }
 
+    /** Handles the submission of the new task form. */
     function handleTaskCreation(e) {
         e.preventDefault();
         const title = document.getElementById("taskTitle").value;
@@ -179,6 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Task created successfully!", "success");
     }
 
+    // =================================================================
+    // --- 4. EVENT LISTENERS (Wire up the UI) ---
+    // =================================================================
 
     document.querySelectorAll('.card-link[href^="#"]').forEach(link => {
         link.addEventListener('click', e => {
@@ -226,7 +230,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-
+    // =================================================================
+    // --- 5. INITIALIZATION ---
+    // =================================================================
 
     function init() {
         renderKPIs();

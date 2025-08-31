@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
+    /** Populates the employee checkboxes in the "Create Task" modal. */
     function populateCreateTaskForm() {
         const assigneesContainer = document.getElementById("taskAssignees");
         const teamMembers = allEmployees.filter(e => myTeamIds.includes(e.id));
@@ -114,7 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    // =================================================================
+    // --- 3. HANDLER FUNCTIONS (Handle user actions) ---
+    // =================================================================
 
+    /** Handles the logic for approving a request. */
     function handleApproval(requestId) {
         const requestIndex = allRequests.findIndex(r => r.id === requestId);
         if (requestIndex === -1) return;
@@ -130,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Request approved successfully!', 'success');
     }
 
-
+    /** Handles the logic for rejecting a request. */
     function handleRejection(requestId, reason) {
         if (!reason) {
             showToast('Rejection reason is mandatory.', 'danger');
@@ -151,6 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Request rejected.', 'info');
     }
 
+    /** Handles the submission of the new task form. */
     function handleTaskCreation(e) {
         e.preventDefault();
         const title = document.getElementById("taskTitle").value;
@@ -179,6 +184,9 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Task created successfully!", "success");
     }
 
+    // =================================================================
+    // --- 4. EVENT LISTENERS (Wire up the UI) ---
+    // =================================================================
 
     document.querySelectorAll('.card-link[href^="#"]').forEach(link => {
         link.addEventListener('click', e => {
@@ -226,7 +234,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-
+    // =================================================================
+    // --- 5. INITIALIZATION ---
+    // =================================================================
 
     function init() {
         renderKPIs();

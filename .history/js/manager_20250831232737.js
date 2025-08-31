@@ -179,6 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Task created successfully!", "success");
     }
 
+    // =================================================================
+    // --- 4. EVENT LISTENERS (Wire up the UI) ---
+    // =================================================================
 
     document.querySelectorAll('.card-link[href^="#"]').forEach(link => {
         link.addEventListener('click', e => {
@@ -226,7 +229,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-
+    // =================================================================
+    // --- 5. INITIALIZATION ---
+    // =================================================================
 
     function init() {
         renderKPIs();

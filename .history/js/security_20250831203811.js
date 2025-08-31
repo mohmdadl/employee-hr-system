@@ -191,4 +191,4 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initial render
   renderBoard();
 });
-//   شوف كدة يا بدر ده جزء ال security.js بعد التعديل شوفوا كدة شغال ولا لا
+  شوف كدة يا بدر ده جزء ال security.js بعد التعديل شوفوا كدة شغال ولا لا
