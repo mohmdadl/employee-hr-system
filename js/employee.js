@@ -241,21 +241,27 @@ document.addEventListener('DOMContentLoaded', () => {
             payrollImpact = calculatePayrollImpact();
         }
 
+        const settings = DataService.getSettings();
+        const monthlySalary = settings.monthlySalary || 5000;
+        const lateAmount = ((payrollImpact.latePenalty / 100) * monthlySalary).toFixed(2);
+        const taskAmount = ((payrollImpact.taskPenalty / 100) * monthlySalary).toFixed(2);
+
         container.innerHTML = `
         <div class="mb-3">
-            <strong>Total Late Penalty:</strong> ${payrollImpact.latePenalty}% 
+            <strong>Total Late Penalty:</strong> ${payrollImpact.latePenalty}% (~$${lateAmount})
             <div class="progress">
                 <div class="progress-bar bg-warning" role="progressbar" style="width: ${payrollImpact.latePenalty}%;" aria-valuenow="${payrollImpact.latePenalty}" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
         </div>
         <div class="mb-3">
-            <strong>Total Task Penalty:</strong> ${payrollImpact.taskPenalty}%
+            <strong>Total Task Penalty:</strong> ${payrollImpact.taskPenalty}% (~$${taskAmount})
             <div class="progress">
                 <div class="progress-bar bg-danger" role="progressbar" style="width: ${payrollImpact.taskPenalty}%;" aria-valuenow="${payrollImpact.taskPenalty}" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
         </div>
     `;
     }
+
 
 
     // --- INITIALIZATION ---
