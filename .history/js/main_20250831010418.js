@@ -3,15 +3,17 @@
 const DataService = {
     init: function() {
         if (!localStorage.getItem('employees')) {
-            console.log('DataService: Initializing data from mock-data.js');
+            console.log('DataService: Initializing data in localStorage from mock-data.js...');
             localStorage.setItem('employees', JSON.stringify(employees || []));
             localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords || []));
             localStorage.setItem('tasks', JSON.stringify(tasks || []));
             localStorage.setItem('permissionRequests', JSON.stringify(permissionRequests || []));
             localStorage.setItem('hrSettings', JSON.stringify(hrSettings || {}));
             localStorage.setItem('approvedLeaves', JSON.stringify(approvedLeaves || []));
+            console.log('DataService: Initialization complete.');
         }
     },
+    // ... (All your get and save functions remain the same)
     getEmployees: () => JSON.parse(localStorage.getItem('employees')),
     getAttendance: () => JSON.parse(localStorage.getItem('attendanceRecords')),
     getTasks: () => JSON.parse(localStorage.getItem('tasks')),
@@ -28,11 +30,11 @@ const DataService = {
 DataService.init();
 
 // =================================================================
-// --- THIS BLOCK IS THE APPLICATION STARTER ---
+// --- THIS BLOCK WAS MISSING - IT'S THE APPLICATION STARTER ---
 // =================================================================
 document.addEventListener('DOMContentLoaded', () => {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    const isLoginPage = window.location.pathname.endsWith('/') || window.location.pathname.endsWith('index.html');
+    const isLoginPage = window.location.pathname.endsWith('index.html') || window.location.pathname === '/';
 
     if (!currentUser && !isLoginPage) {
         window.location.href = 'index.html';
@@ -43,11 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
         renderNavbar(currentUser);
     }
 });
+// =================================================================
 
 function renderNavbar(user) {
     const navbarContainer = document.getElementById('navbarContainer');
     if (!navbarContainer) return;
 
+    // This is the complete renderNavbar function from our previous discussions
     const navs = {
         Employee: `<li class="nav-item"><a class="nav-link" href="employee.html">My Dashboard</a></li>`,
         Manager: `<li class="nav-item"><a class="nav-link" href="manager.html">Approvals & Tasks</a></li>`,
@@ -75,6 +79,7 @@ function renderNavbar(user) {
 
     // --- Activate Event Listeners for Navbar ---
     document.getElementById('logoutBtn').addEventListener('click', (e) => { e.preventDefault(); localStorage.removeItem('currentUser'); window.location.href = 'index.html'; });
+
     const themeToggleBtn = document.getElementById('theme-toggle');
     const sunIcon = document.getElementById('theme-icon-sun');
     const moonIcon = document.getElementById('theme-icon-moon');
