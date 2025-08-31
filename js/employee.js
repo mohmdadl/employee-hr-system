@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const wfhThisWeek = myRequests.filter(r => r.type === 'WFH' && r.status === 'Approved' && getWeekNumber(new Date(r.payload.requestedDate)) === thisWeek).length;
         document.getElementById('wfhKpi').textContent = `${wfhThisWeek} / ${AppConfig.WFH_QUOTA_PER_WEEK}`;
-        
+
         const pendingRequestsCount = myRequests.filter(r => r.status === 'Pending').length;
         document.getElementById('pendingRequestsKpi').textContent = pendingRequestsCount;
 
@@ -153,11 +153,11 @@ document.addEventListener('DOMContentLoaded', () => {
         allRequests.push(newRequest);
         DataService.saveRequests(allRequests);
         myRequests = allRequests.filter(r => r.employeeId === currentUser.id); // Refresh state
-        
+
         renderRequestsHistory(); // Re-render UI
         renderKPIs();
         showToast('Request submitted successfully!', 'success');
-        
+
         e.target.reset(); // Reset the form
         document.getElementById('dynamicFieldsContainer').innerHTML = '';
     }
@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dynamicFieldsContainer = document.getElementById('dynamicFieldsContainer');
         const submitBtn = document.getElementById('submitRequestBtn');
         const type = requestTypeSelect.value;
-        
+
         dynamicFieldsContainer.innerHTML = '';
         submitBtn.disabled = false;
 
@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         fieldsHTML += `<div class="mb-3"><label for="requestReason" class="form-label">Reason</label><textarea class="form-control" id="requestReason" rows="2" required></textarea></div>`;
         dynamicFieldsContainer.innerHTML = fieldsHTML;
-        
+
         document.getElementById('requestDate').addEventListener('change', handleRequestDateChange);
     }
 
@@ -208,6 +208,31 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('requestForm').addEventListener('submit', handleRequestSubmit);
 
     // Note: Other event listeners for tasks, deleting requests, etc., will be added here in later tasks.
+    // Task Details - Show Modal on button click    
+    const taskDetailsModalElement = document.getElementById('taskDetailsModal');
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('view-task-btn')) {
+            const taskId = e.target.getAttribute('data-task-id');
+            const task = myTasks.find(t => t.taskId == taskId);
+
+            if (task && taskDetailsModalElement) {
+                const titleEl = document.getElementById('taskDetailTitle');
+                const descEl = document.getElementById('taskDetailDescription');
+                const priorityEl = document.getElementById('taskDetailPriority');
+                const deadlineEl = document.getElementById('taskDetailDeadline');
+                const statusEl = document.getElementById('taskDetailStatus');
+
+                if (titleEl) titleEl.textContent = task.title;
+                if (descEl) descEl.textContent = task.description || 'No description provided.';
+                if (priorityEl) priorityEl.textContent = task.priority;
+                if (deadlineEl) deadlineEl.textContent = new Date(task.deadline).toLocaleString();
+                if (statusEl) statusEl.textContent = task.status;
+
+                taskDetailsModal.show();
+            }
+        }
+    });
+
 
 
     // =================================================================
@@ -218,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function init() {
         // For Day 2, we are not calculating payroll. This will be activated on Day 5/6.
         // payrollImpact = SalaryCalculator.calculateMonthlyImpact(...);
-        
+
         renderKPIs();
         renderAttendance();
         renderTasks();
