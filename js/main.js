@@ -15,6 +15,11 @@ const DataService = {
         const storedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
         const newTasks = tasks.filter(t => !storedTasks.some(st => st.taskId === t.taskId));
         localStorage.setItem('tasks', JSON.stringify([...storedTasks, ...newTasks]));
+        // update attendance without duplicates
+        const storedAttendance = JSON.parse(localStorage.getItem('attendanceRecords')) || [];
+        const newAttendance = attendanceRecords.filter(a => !storedAttendance.some(st => st.id === a.id));
+        localStorage.setItem('attendanceRecords', JSON.stringify([...storedAttendance, ...newAttendance]));
+
     },
     getEmployees: () => JSON.parse(localStorage.getItem('employees')),
     getAttendance: () => JSON.parse(localStorage.getItem('attendanceRecords')),
