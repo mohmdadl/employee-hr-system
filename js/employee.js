@@ -206,6 +206,57 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Request canceled successfully!', 'success');
         }
     });
+    // --- Payroll Impact Calculation ---
+    function calculatePayrollImpact() {
+        const today = new Date();
+        const thisMonth = today.getMonth();
+        let latePenalty = 0;
+        let taskPenalty = 0;
+
+        myAttendance.forEach(rec => {
+            if (new Date(rec.date).getMonth() === thisMonth && rec.minutesLate > 0) {
+                const tiers = DataService.getSettings().latePenaltyTiers || { tier1: { from: 1, to: 15, penalty: 1 }, tier2: { from: 16, to: 30, penalty: 2 }, tier3: { from: 31, to: 1000, penalty: 5 } };
+                if (rec.minutesLate >= tiers.tier1.from && rec.minutesLate <= tiers.tier1.to) latePenalty += tiers.tier1.penalty;
+                else if (rec.minutesLate >= tiers.tier2.from && rec.minutesLate <= tiers.tier2.to) latePenalty += tiers.tier2.penalty;
+                else if (rec.minutesLate >= tiers.tier3.from && rec.minutesLate <= tiers.tier3.to) latePenalty += tiers.tier3.penalty;
+            }
+        });
+
+        myTasks.forEach(task => {
+            const deadline = new Date(task.deadline);
+            if (deadline.getMonth() === thisMonth && task.status !== 'Completed') {
+                const taskPenalties = DataService.getSettings().taskPenalty || { High: 2, Medium: 1, Low: 0.5, Critical: 3 };
+                taskPenalty += taskPenalties[task.priority] || 0;
+            }
+        });
+
+        return { latePenalty, taskPenalty };
+    }
+
+    function renderPayrollImpact() {
+        const container = document.getElementById('payrollImpactDetails');
+        if (!container) return;
+
+        if (!payrollImpact) {
+            payrollImpact = calculatePayrollImpact();
+        }
+
+        container.innerHTML = `
+        <div class="mb-3">
+            <strong>Total Late Penalty:</strong> ${payrollImpact.latePenalty}% 
+            <div class="progress">
+                <div class="progress-bar bg-warning" role="progressbar" style="width: ${payrollImpact.latePenalty}%;" aria-valuenow="${payrollImpact.latePenalty}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+        <div class="mb-3">
+            <strong>Total Task Penalty:</strong> ${payrollImpact.taskPenalty}%
+            <div class="progress">
+                <div class="progress-bar bg-danger" role="progressbar" style="width: ${payrollImpact.taskPenalty}%;" aria-valuenow="${payrollImpact.taskPenalty}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+    `;
+    }
+
 
     // --- INITIALIZATION ---
     function init() {
@@ -214,6 +265,8 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTasks();
         renderRequestForm();
         renderRequestsHistory();
+        renderPayrollImpact();
+
     }
 
     init();
