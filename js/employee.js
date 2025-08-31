@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const taskDetailsModal = new bootstrap.Modal(document.getElementById('taskDetailsModal'));
 
     let myAttendance = DataService.getAttendance().filter(r => r.employeeId === currentUser.id);
     let myTasks = DataService.getTasks().filter(t => t.assignees.includes(currentUser.id));
@@ -37,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Est. Deductions (Salary Impact) ---
         if (!payrollImpact) payrollImpact = calculatePayrollImpact();
-        const monthlySalary = currentUser.monthlySalary || 5000; // افتراضي لو مش معرف
+        const monthlySalary = currentUser.monthlySalary || 5000; // ا
         const totalPenaltyPercentage = payrollImpact.latePenalty + payrollImpact.taskPenalty;
         const estimatedDeductions = (totalPenaltyPercentage / 100) * monthlySalary;
 
@@ -185,6 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- EVENT LISTENERS ---
     document.getElementById('requestForm').addEventListener('submit', handleRequestSubmit);
+    const taskDetailsModal = new bootstrap.Modal(document.getElementById('taskDetailsModal'));
 
     const taskDetailsModalElement = document.getElementById('taskDetailsModal');
     document.addEventListener('click', (e) => {
