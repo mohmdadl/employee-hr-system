@@ -1,5 +1,3 @@
-<!-- Employee Dashboard -->
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,14 +6,17 @@
     <title>Employee Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
-
+        // هذا السكربت الصغير يمنع "وميض" الصفحة عند التبديل بين الثيمات
+        // ويضمن تطبيق الثيم الصحيح من البداية
         (function () {
             const getStoredTheme = () => localStorage.getItem('theme');
             const applyTheme = (theme) => {
+                // إذا لم يكن هناك ثيم مخزن، استخدم الثيم الداكن كافتراضي
                 const themeToApply = theme || 'dark';
                 document.documentElement.setAttribute('data-bs-theme', themeToApply);
             };
 
+            // طبق الثيم فورًا عند تحميل الصفحة
             applyTheme(getStoredTheme());
         })();
     </script>
@@ -138,7 +139,7 @@
                     </div>
                 </div>
             </div>
-            <!-- payroll impact -->
+            <!-- payroll impacty -->
             <div class="tab-pane fade p-3 border border-top-0" id="payroll-tab-pane" role="tabpanel">
                 <h4 class="mb-3">This Month's Payroll Impact Breakdown</h4>
                 <div id="payrollImpactDetails">
@@ -148,6 +149,7 @@
         </div>
     </div>
 
+    <!-- Add this modal to the end of employee.html -->
     <!-- Task Details Modal -->
     <div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel"
         aria-hidden="true">
@@ -158,13 +160,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="taskDetailsModalBody">
-                    <p><strong>Title:</strong> <span id="taskDetailTitle"></span></p>
-                    <p><strong>Description:</strong> <span id="taskDetailDescription"></span></p>
-                    <p><strong>Priority:</strong> <span id="taskDetailPriority"></span></p>
-                    <p><strong>Deadline:</strong> <span id="taskDetailDeadline"></span></p>
-                    <p><strong>Status:</strong> <span id="taskDetailStatus"></span></p>
+                    <!-- Content will be injected by JS -->
                 </div>
-
                 <div class="modal-footer" id="taskDetailsModalFooter">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
