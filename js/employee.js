@@ -1,57 +1,125 @@
-// js/employee.js (Final, Clean, and Blocked-Out Version)
+// js/employee.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // =================================================================
-    // --- 1. SCRIPT INITIALIZATION & STATE ---
-    // =================================================================
-    console.log("DOM ready. Initializing Employee Dashboard script...");
-
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    let payrollImpact = null;
     if (!currentUser || currentUser.role !== 'Employee') {
-        console.error("Authentication Error: Not an employee or no user logged in. Stopping script.");
-        return; // Stop execution if not a valid employee
+        // Optional: redirect to login if not an employee, though main.js should handle it.
+        // window.location.href = 'index.html';
+        return;
     }
 
-    // Modal Instance
     const taskDetailsModal = new bootstrap.Modal(document.getElementById('taskDetailsModal'));
 
-    // Application State (The single source of truth for this page)
+
+    // --- Global State ---
     let myAttendance = DataService.getAttendance().filter(r => r.employeeId === currentUser.id);
     let myTasks = DataService.getTasks().filter(t => t.assignees.includes(currentUser.id));
     let myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
-    let payrollImpact = null; // To be used on Day 5/6
 
-    console.log(`Initialized with ${myAttendance.length} attendance records, ${myTasks.length} tasks, and ${myRequests.length} requests for ${currentUser.name}.`);
+    // --- Render Functions ---
 
-
-    // =================================================================
-    // --- 2. RENDER FUNCTIONS (Update the UI) ---
-    // =================================================================
-
-    /** Renders all the Key Performance Indicator (KPI) cards. */
     function renderKPIs() {
-        const thisMonth = new Date().getMonth();
-        const thisYear = new Date().getFullYear();
-        const thisWeek = getWeekNumber(new Date());
+        myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
 
-        const latePermissionsThisMonth = myRequests.filter(r => r.type === 'Late' && r.status === 'Approved' && new Date(r.payload.requestedDate).getMonth() === thisMonth).length;
-        document.getElementById('latePermissionsKpi').textContent = `${latePermissionsThisMonth} / ${AppConfig.LATE_PERMISSION_QUOTA_PER_MONTH}`;
+        if (payrollImpact) {
+            const deductionsKpi = document.getElementById('deductionsKpi');
+            deductionsKpi.textContent = `EGP ${payrollImpact.totalDeductions.toFixed(2)}`;
+            if (payrollImpact.capApplied) {
+                deductionsKpi.innerHTML += ` <span class="badge bg-light text-dark">Capped</span>`;
+            }
+        }
 
-        const wfhThisWeek = myRequests.filter(r => r.type === 'WFH' && r.status === 'Approved' && getWeekNumber(new Date(r.payload.requestedDate)) === thisWeek).length;
-        document.getElementById('wfhKpi').textContent = `${wfhThisWeek} / ${AppConfig.WFH_QUOTA_PER_WEEK}`;
-        
+        // Update pending requests count
         const pendingRequestsCount = myRequests.filter(r => r.status === 'Pending').length;
         document.getElementById('pendingRequestsKpi').textContent = pendingRequestsCount;
 
-        // Note: Payroll KPI is intentionally left out for Day 2. It will be added on Day 5/6.
+        // Update late permissions used count
+        const approvedLateCount = myRequests.filter(r => r.type === 'Late' && r.status === 'Approved').length;
+        document.getElementById('latePermissionsKpi').textContent = `${approvedLateCount} / ${AppConfig.LATE_PERMISSION_QUOTA_PER_MONTH}`;
+
+        // Update WFH used this week
+        const currentWeek = getWeekNumber(new Date());
+        const currentYear = new Date().getFullYear();
+        const wfhThisWeek = myRequests.filter(r => r.type === 'WFH' && r.status === 'Approved' && getWeekNumber(new Date(r.payload.requestedDate)) === currentWeek && new Date(r.payload.requestedDate).getFullYear() === currentYear).length;
+        document.getElementById('wfhKpi').textContent = `${wfhThisWeek} / ${AppConfig.WFH_QUOTA_PER_WEEK}`;
+    }
+    function renderPayrollImpact() {
+        const container = document.getElementById('payrollImpactDetails');
+        container.innerHTML = '';
+
+        if (!payrollImpact || payrollImpact.details.length === 0) {
+            container.innerHTML = `<div class="alert alert-success">No deductions or bonuses recorded for this month. Keep up the great work!</div>`;
+            return;
+        }
+
+        const detailsTable = `
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Amount (EGP)</th>
+                    <th>Reason</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${payrollImpact.details.map(item => `
+                    <tr>
+                        <td>${item.date}</td>
+                        <td><span class="badge text-bg-${item.amount > 0 ? 'success' : 'danger'}">${item.type}</span></td>
+                        <td class="${item.amount > 0 ? 'text-success' : 'text-danger'}">${item.amount.toFixed(2)}</td>
+                        <td>${item.reason}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+           <tfoot class="fw-semibold">
+    <!-- Total Deductions -->
+    <tr class="table-danger">
+        <td colspan="2" class="text-start ps-3">
+            <i class="bi bi-dash-circle me-1"></i> Total Deductions
+        </td>
+        <td class="text-danger text-end pe-3">
+            - ${payrollImpact.totalDeductions.toFixed(2)}
+        </td>
+        <td class="fst-italic text-muted">
+            ${payrollImpact.capApplied ? '(Capped at 25%)' : ''}
+        </td>
+    </tr>
+
+    <!-- Total Bonuses -->
+    <tr class="table-success">
+        <td colspan="2" class="text-start ps-3">
+            <i class="bi bi-plus-circle me-1"></i> Total Bonuses/Pay
+        </td>
+        <td class="text-success text-end pe-3">
+            + ${(payrollImpact.overtimePay + payrollImpact.bonus).toFixed(2)}
+        </td>
+        <td></td>
+    </tr>
+
+    <!-- Final Net Impact -->
+    <tr class="table-light border-top border-3">
+        <td colspan="2" class="text-start ps-3 fw-bold fs-5">
+            <i class="bi bi-cash-coin me-1"></i> Final Net Impact
+        </td>
+        <td class="fw-bold fs-5 text-end pe-3 ${payrollImpact.finalImpact >= 0 ? 'text-success' : 'text-danger'}">
+            ${payrollImpact.finalImpact.toFixed(2)}
+        </td>
+        <td></td>
+    </tr>
+</tfoot>
+
+        </table>
+    `;
+        container.innerHTML = detailsTable;
     }
 
-    /** Renders the user's attendance history table. */
     function renderAttendance() {
         const tableBody = document.getElementById('attendanceTableBody');
         tableBody.innerHTML = '';
         if (myAttendance.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No attendance records found.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center">No attendance records found.</td></tr>`;
             return;
         }
         myAttendance.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(rec => {
@@ -67,25 +135,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    /** Renders the user's assigned tasks as cards. */
     function renderTasks() {
         const listContainer = document.getElementById('tasksList');
         listContainer.innerHTML = '';
         if (myTasks.length === 0) {
-            listContainer.innerHTML = `<div class="text-center text-muted p-3">You have no assigned tasks. Great job!</div>`;
+            listContainer.innerHTML = `<p class="text-center">You have no assigned tasks.</p>`;
             return;
         }
         myTasks.forEach(task => {
             const card = document.createElement('div');
             card.className = 'col-md-6 mb-3';
             card.innerHTML = `
-                <div class="card h-100 shadow-sm">
+                <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">${task.title}</h5>
                         <h6 class="card-subtitle mb-2 text-body-secondary">Priority: ${task.priority}</h6>
-                        <p class="card-text mb-1"><strong>Deadline:</strong> ${new Date(task.deadline).toLocaleString()}</p>
-                        <p class="mb-2"><strong>Status:</strong> ${task.status}</p>
-                        <button class="btn btn-sm btn-outline-primary view-task-btn" data-task-id="${task.taskId}">View Details</button>
+                        <p class="card-text"><strong>Deadline:</strong> ${new Date(task.deadline).toLocaleString()}</p>
+                        <p><strong>Status:</strong> ${task.status}</p>
+                        <button class="btn btn-sm btn-outline-info view-task-btn" data-task-id="${task.taskId}">View Details</button>
                     </div>
                 </div>
             `;
@@ -93,48 +160,206 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    /** Renders the dynamic form for creating new requests. */
     function renderRequestForm() {
-        // This function will be called once to set up the initial event listener.
         const requestTypeSelect = document.getElementById('requestType');
-        requestTypeSelect.addEventListener('change', handleRequestTypeChange);
-    }
+        const dynamicFieldsContainer = document.getElementById('dynamicFieldsContainer');
+        const submitBtn = document.getElementById('submitRequestBtn');
 
-    /** Renders the user's request history list. */
-    function renderRequestsHistory() {
-        const historyList = document.getElementById('requestsHistoryList');
-        historyList.innerHTML = '';
-        if (myRequests.length === 0) {
-            historyList.innerHTML = `<li class="list-group-item text-muted">You have not submitted any requests.</li>`;
-            return;
-        }
-        const statusBadges = { Pending: 'text-bg-warning', Approved: 'text-bg-success', Rejected: 'text-bg-danger' };
-        myRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(req => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item d-flex justify-content-between align-items-center';
-            li.innerHTML = `
-                <div class="ms-2 me-auto">
-                    <div class="fw-bold">${req.type} - ${req.payload.requestedDate}</div>
-                    <small class="text-muted">Submitted: ${req.createdAt}</small>
-                    ${req.status === 'Rejected' ? `<div class="text-danger small fst-italic mt-1">Reason: ${req.managerComment}</div>` : ''}
-                </div>
-                <div>
-                    ${req.status === 'Pending' ? `<button class="btn btn-sm btn-outline-danger delete-request-btn me-2" data-request-id="${req.id}" title="Cancel Request"><i class="bi bi-trash"></i></button>` : ''}
-                    <span class="badge ${statusBadges[req.status]} rounded-pill">${req.status}</span>
+        requestTypeSelect.addEventListener('change', () => {
+            const type = requestTypeSelect.value;
+            dynamicFieldsContainer.innerHTML = '';
+            submitBtn.disabled = false;
+
+            let fieldsHTML = `
+                <div class="mb-3">
+                    <label for="requestDate" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="requestDate" required min="${getISODate()}">
                 </div>
             `;
+
+            if (type === 'Late') {
+                fieldsHTML += `
+                    <div class="mb-3">
+                        <label for="lateMinutes" class="form-label">Minutes Expected Late</label>
+                        <input type="number" class="form-control" id="lateMinutes" placeholder="e.g., 30" required>
+                    </div>`;
+            }
+
+            fieldsHTML += `
+                <div class="mb-3">
+                    <label for="requestReason" class="form-label">Reason</label>
+                    <textarea class="form-control" id="requestReason" rows="2" required></textarea>
+                </div>
+            `;
+            dynamicFieldsContainer.innerHTML = fieldsHTML;
+
+            // Check Quotas
+            const requestDateInput = document.getElementById('requestDate');
+            requestDateInput.addEventListener('change', () => {
+                const selectedDate = new Date(requestDateInput.value);
+                if (type === 'WFH') {
+                    const week = getWeekNumber(selectedDate);
+                    const year = selectedDate.getFullYear();
+                    const wfhThisWeek = myRequests.filter(r => r.type === 'WFH' && r.status === 'Approved' && getWeekNumber(new Date(r.payload.requestedDate)) === week && new Date(r.payload.requestedDate).getFullYear() === year).length;
+                    if (wfhThisWeek >= AppConfig.WFH_QUOTA_PER_WEEK) {
+                        showToast(`WFH quota (${AppConfig.WFH_QUOTA_PER_WEEK}/week) exceeded for the selected week.`, 'danger');
+                        submitBtn.disabled = true;
+                    } else {
+                        submitBtn.disabled = false;
+                    }
+                }
+            });
+        });
+    }
+
+    function renderRequestsHistory() {
+        const historyList = document.getElementById('requestsHistoryList');
+
+        myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
+
+        historyList.innerHTML = '';
+        if (myRequests.length === 0) {
+            historyList.innerHTML = `<li class="list-group-item">You have not submitted any requests.</li>`;
+            return;
+        }
+        const statusBadges = {
+            Pending: 'text-bg-warning',
+            Approved: 'text-bg-success',
+            Rejected: 'text-bg-danger'
+        };
+        myRequests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(req => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-start';
+            li.innerHTML = `
+            <div class="ms-2 me-auto">
+                <div class="fw-bold">${req.type} - ${req.payload.requestedDate}</div>
+                <small>Submitted: ${req.createdAt}</small>
+                ${req.status === 'Rejected' ? `<div class="text-danger small fst-italic">Reason: ${req.managerComment}</div>` : ''}
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="badge ${statusBadges[req.status]} rounded-pill me-2">${req.status}</span>
+                ${req.status === 'Pending' ? `<button class="btn btn-sm btn-outline-danger cancel-request-btn" data-request-id="${req.id}" title="Cancel Request"><i class="bi bi-x-circle"></i></button>` : ''}
+            </div>
+        `;
             historyList.appendChild(li);
         });
     }
 
 
-    // =================================================================
-    // --- 3. HANDLER FUNCTIONS (Handle user actions) ---
-    // =================================================================
+    // NEW function to show the task details in the modal
+    function showTaskDetails(task) {
+        document.getElementById('taskDetailsModalLabel').textContent = task.title;
+        const body = document.getElementById('taskDetailsModalBody');
+        body.innerHTML = `
+        <p><strong>Description:</strong> ${task.description || 'No description provided.'}</p>
+        <p><strong>Priority:</strong> ${task.priority}</p>
+        <p><strong>Deadline:</strong> ${new Date(task.deadline).toLocaleString()}</p>
+        <p><strong>Status:</strong> ${task.status}</p>
+        <hr>
+        <label for="taskStatusUpdate" class="form-label">Update Status:</label>
+        <select class="form-select" id="taskStatusUpdate">
+            <option value="Not Started" ${task.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
+            <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+            <option value="Blocked" ${task.status === 'Blocked' ? 'selected' : ''}>Blocked</option>
+            <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
+        </select>
+    `;
+        const footer = document.getElementById('taskDetailsModalFooter');
+        footer.innerHTML = `
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="saveTaskStatusBtn" data-task-id="${task.taskId}">Save Changes</button>
+    `;
+        taskDetailsModal.show();
+    }
 
-    /** Handles the submission of the new request form. */
-    function handleRequestSubmit(e) {
+    // --- Event Listeners ---
+    document.getElementById('taskDetailsModalFooter').addEventListener('click', (e) => {
+        if (e.target.id === 'saveTaskStatusBtn') {
+            const taskId = parseInt(e.target.dataset.taskId);
+            const newStatus = document.getElementById('taskStatusUpdate').value;
+
+            let allTasks = DataService.getTasks();
+            const taskIndex = allTasks.findIndex(t => t.taskId === taskId);
+
+            if (taskIndex !== -1) {
+                allTasks[taskIndex].status = newStatus;
+                DataService.saveTasks(allTasks);
+
+                // Refresh local state and re-render
+                myTasks = allTasks.filter(t => t.assignees.includes(currentUser.id));
+                renderTasks();
+
+                taskDetailsModal.hide();
+                showToast('Task status updated!', 'success');
+            }
+        }
+    });
+
+
+    document.getElementById('tasksList').addEventListener('click', (e) => {
+        if (e.target.classList.contains('view-task-btn')) {
+            const taskId = parseInt(e.target.dataset.taskId);
+            const task = myTasks.find(t => t.taskId === taskId);
+            if (task) {
+                showTaskDetails(task);
+            }
+        }
+    });
+
+    document.getElementById('requestsHistoryList').addEventListener('click', (e) => {
+        if (e.target.classList.contains('cancel-request-btn') || e.target.closest('.cancel-request-btn')) {
+            const requestId = parseInt(e.target.dataset.requestId || e.target.closest('.cancel-request-btn').dataset.requestId);
+            const allRequests = DataService.getRequests();
+            const requestIndex = allRequests.findIndex(r => r.id === requestId);
+
+            if (requestIndex !== -1) {
+                allRequests.splice(requestIndex, 1);
+                DataService.saveRequests(allRequests);
+
+                // Update local state and re-render
+                myRequests = allRequests.filter(r => r.employeeId === currentUser.id);
+                renderRequestsHistory();
+                renderKPIs();
+
+                showToast('Request cancelled successfully!', 'success');
+            }
+        }
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        const refreshBtn = document.getElementById('refreshRequestsBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                // Refresh data
+                myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
+                myAttendance = DataService.getAttendance().filter(r => r.employeeId === currentUser.id);
+
+                // Recalculate payrollImpact including all late days from attendance
+                const allData = {
+                    employees: DataService.getEmployees(),
+                    attendance: DataService.getAttendance(),
+                    tasks: DataService.getTasks(),
+                    requests: DataService.getRequests(),
+                    settings: DataService.getSettings()
+                };
+                const today = new Date();
+                payrollImpact = SalaryCalculator.calculateMonthlyImpact(currentUser.id, today.getFullYear(), today.getMonth(), allData);
+
+                // Re-render
+                renderRequestsHistory();
+                renderKPIs();
+                renderAttendance();
+                renderPayrollImpact();
+                showToast('Requests, KPIs, Attendance & Payroll Impact refreshed!', 'info');
+            });
+        }
+
+        renderKPIs();
+        renderRequestsHistory();
+    });
+
+    document.getElementById('requestForm').addEventListener('submit', (e) => {
         e.preventDefault();
+
         const allRequests = DataService.getRequests();
         const type = document.getElementById('requestType').value;
         const requestedDate = document.getElementById('requestDate').value;
@@ -145,88 +370,61 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const newRequest = { id: Date.now(), employeeId: currentUser.id, type, payload: { requestedDate, reason }, status: 'Pending', managerComment: '', createdAt: getISODate() };
+        const newRequest = {
+            id: Date.now(),
+            employeeId: currentUser.id,
+            type: type,
+            payload: {
+                requestedDate: requestedDate,
+                reason: reason,
+            },
+            status: 'Pending',
+            managerComment: '',
+            createdAt: getISODate()
+        };
+
         if (type === 'Late') {
             newRequest.payload.minutesExpectedLate = parseInt(document.getElementById('lateMinutes').value);
         }
 
         allRequests.push(newRequest);
         DataService.saveRequests(allRequests);
-        myRequests = allRequests.filter(r => r.employeeId === currentUser.id); // Refresh state
-        
-        renderRequestsHistory(); // Re-render UI
+
+        // Update local state and re-render
+        myRequests = allRequests.filter(r => r.employeeId === currentUser.id);
+        renderRequestsHistory();
         renderKPIs();
-        showToast('Request submitted successfully!', 'success');
-        
-        e.target.reset(); // Reset the form
+
+        showToast('Your request has been submitted successfully!', 'success');
+        document.getElementById('requestForm').reset();
         document.getElementById('dynamicFieldsContainer').innerHTML = '';
-    }
-
-    /** Handles changes in the request type dropdown to show correct fields. */
-    function handleRequestTypeChange() {
-        const requestTypeSelect = document.getElementById('requestType');
-        const dynamicFieldsContainer = document.getElementById('dynamicFieldsContainer');
-        const submitBtn = document.getElementById('submitRequestBtn');
-        const type = requestTypeSelect.value;
-        
-        dynamicFieldsContainer.innerHTML = '';
-        submitBtn.disabled = false;
-
-        let fieldsHTML = `<div class="mb-3"><label for="requestDate" class="form-label">Date</label><input type="date" class="form-control" id="requestDate" required min="${getISODate()}"></div>`;
-        if (type === 'Late') {
-            fieldsHTML += `<div class="mb-3"><label for="lateMinutes" class="form-label">Minutes Expected Late</label><input type="number" class="form-control" id="lateMinutes" placeholder="e.g., 30" required></div>`;
-        }
-        fieldsHTML += `<div class="mb-3"><label for="requestReason" class="form-label">Reason</label><textarea class="form-control" id="requestReason" rows="2" required></textarea></div>`;
-        dynamicFieldsContainer.innerHTML = fieldsHTML;
-        
-        document.getElementById('requestDate').addEventListener('change', handleRequestDateChange);
-    }
-
-    /** Handles changes in the request date to check for quotas. */
-    function handleRequestDateChange() {
-        const type = document.getElementById('requestType').value;
-        const selectedDate = new Date(this.value);
-        const submitBtn = document.getElementById('submitRequestBtn');
-
-        if (type === 'WFH') {
-            const week = getWeekNumber(selectedDate);
-            const wfhThisWeek = myRequests.filter(r => r.type === 'WFH' && r.status === 'Approved' && getWeekNumber(new Date(r.payload.requestedDate)) === week).length;
-            if (wfhThisWeek >= AppConfig.WFH_QUOTA_PER_WEEK) {
-                showToast(`WFH quota (${AppConfig.WFH_QUOTA_PER_WEEK}/week) exceeded for the selected week.`, 'danger');
-                submitBtn.disabled = true;
-            } else {
-                submitBtn.disabled = false;
-            }
-        }
-    }
+    });
 
 
-    // =================================================================
-    // --- 4. EVENT LISTENERS (Wire up the UI) ---
-    // =================================================================
+    // --- Initial Page Load ---
 
-    document.getElementById('requestForm').addEventListener('submit', handleRequestSubmit);
-
-    // Note: Other event listeners for tasks, deleting requests, etc., will be added here in later tasks.
-
-
-    // =================================================================
-    // --- 5. INITIALIZATION ---
-    // =================================================================
-
-    /** The main function for this page. Called once when the script starts. */
     function init() {
-        // For Day 2, we are not calculating payroll. This will be activated on Day 5/6.
-        // payrollImpact = SalaryCalculator.calculateMonthlyImpact(...);
-        
+        // --- Get all data needed for calculation ---
+        const allData = {
+            employees: DataService.getEmployees(),
+            attendance: DataService.getAttendance(),
+            tasks: DataService.getTasks(),
+            requests: DataService.getRequests(),
+            settings: DataService.getSettings()
+        };
+        const today = new Date();
+
+        // --- Calculate the payroll impact for the current user and month ---
+        payrollImpact = SalaryCalculator.calculateMonthlyImpact(currentUser.id, today.getFullYear(), today.getMonth(), allData);
+
+        // --- Now render everything ---
         renderKPIs();
         renderAttendance();
         renderTasks();
         renderRequestForm();
         renderRequestsHistory();
+        renderPayrollImpact(); // <-- Call the new render function
     }
 
-    // Run the app!
     init();
-
-}); // End of DOMContentLoaded
+});

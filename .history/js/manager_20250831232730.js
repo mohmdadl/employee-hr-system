@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-
+    
     const createTaskModal = new bootstrap.Modal(document.getElementById('createTaskModal'));
     const rejectionModal = new bootstrap.Modal(document.getElementById('rejectionModal'));
 
@@ -114,48 +114,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    // =================================================================
+    // --- 3. HANDLER FUNCTIONS (Handle user actions) ---
+    // =================================================================
 
+    /** Handles the logic for approving a request. */
     function handleApproval(requestId) {
         const requestIndex = allRequests.findIndex(r => r.id === requestId);
         if (requestIndex === -1) return;
 
-        const request = allRequests[requestIndex];
-
-        request.status = 'Approved';
-        request.managerComment = 'Approved';
-        request.decidedAt = getISODate();
-
-        // 🟢 Ensure required payload fields exist
-        if (!request.payload) request.payload = {};
-
-        if (request.type === "Late") {
-            if (!request.payload.requestedDate) {
-                request.payload.requestedDate = getISODate(); // Default to today
-            }
-            if (!request.payload.minutesExpectedLate) {
-                request.payload.minutesExpectedLate = 15; // Default grace minutes
-            }
-        }
-
-        if (request.type === "WFH" && !request.payload.requestedDate) {
-            request.payload.requestedDate = getISODate();
-        }
-
-        if (request.type === "Overtime" && !request.payload.requestedDate) {
-            request.payload.requestedDate = getISODate();
-        }
-
-        allRequests[requestIndex] = request;
+        allRequests[requestIndex].status = 'Approved';
+        allRequests[requestIndex].managerComment = 'Approved';
+        allRequests[requestIndex].decidedAt = getISODate();
         DataService.saveRequests(allRequests);
-
-        myTeamRequests = allRequests.filter(r => myTeamIds.includes(r.employeeId)); // Refresh
+        
+        myTeamRequests = allRequests.filter(r => myTeamIds.includes(r.employeeId)); // Refresh state
         renderKPIs();
         renderApprovalsQueue();
         showToast('Request approved successfully!', 'success');
     }
 
-
-
+    /** Handles the logic for rejecting a request. */
     function handleRejection(requestId, reason) {
         if (!reason) {
             showToast('Rejection reason is mandatory.', 'danger');
@@ -176,6 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Request rejected.', 'info');
     }
 
+    /** Handles the submission of the new task form. */
     function handleTaskCreation(e) {
         e.preventDefault();
         const title = document.getElementById("taskTitle").value;
@@ -196,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         myTeamTasks = allTasks.filter(t => t.assignees.some(id => myTeamIds.includes(id))); // Refresh state
         renderTeamTasks();
         renderKPIs();
-
+        
         createTaskModal.hide();
         createTaskForm.reset();
         taskDeadlineInput.classList.remove("is-invalid");
@@ -204,6 +184,9 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("Task created successfully!", "success");
     }
 
+    // =================================================================
+    // --- 4. EVENT LISTENERS (Wire up the UI) ---
+    // =================================================================
 
     document.querySelectorAll('.card-link[href^="#"]').forEach(link => {
         link.addEventListener('click', e => {
@@ -251,7 +234,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-
+    // =================================================================
+    // --- 5. INITIALIZATION ---
+    // =================================================================
 
     function init() {
         renderKPIs();
