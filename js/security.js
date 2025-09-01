@@ -1,4 +1,4 @@
-// js/security.js (النسخة النهائية الكاملة)
+// js/security.js
 
 document.addEventListener("DOMContentLoaded", () => {
   const today = getISODate();
@@ -9,39 +9,69 @@ document.addEventListener("DOMContentLoaded", () => {
     (e) => e.role === "Employee"
   );
   let attendance = DataService.getAttendance();
-  let approvedLeaves = DataService.getApprovedLeaves
-    ? DataService.getApprovedLeaves()
-    : [];
 
+  // ✅ Set Status & Notes based on check-in
   function autoUpdateStatus(record) {
-    // 1. Approved Leave موجودة
-    const hasLeave = approvedLeaves.some(
-      (leave) => leave.employeeId === record.employeeId && leave.date === today
-    );
-    if (hasLeave || record.status === "Leave") return "Leave";
+    record.minutesLate = 0; // reset default
+    record.notes = record.notes || "";
 
-    // 2. Absent
-    if (!record.checkIn && !record.checkOut) return "Absent";
+    if (!record.checkIn && !record.checkOut) {
+      record.notes = "Absent (no check-in)";
+      return "Absent";
+    }
 
-    // 3. Present (No Checkout)
-    if (record.checkIn && !record.checkOut) return "Present (No Checkout)";
+    if (record.checkIn) {
+      const [h, m] = record.checkIn.split(":").map(Number);
+      const checkInMinutes = h * 60 + m;
+      const nineAM = 9 * 60;
+      const elevenAM = 11 * 60;
 
-    // 4. Present
-    if (record.checkIn && record.checkOut) return "Present";
+      if (checkInMinutes <= nineAM) {
+        record.notes = `On time (arrived at ${record.checkIn})`;
+        return "Present";
+      } else {
+        record.minutesLate = checkInMinutes - nineAM;
+        record.notes = `Late by ${record.minutesLate} minutes (arrived at ${record.checkIn})`;
+        return "Late";
+      }
+    }
 
     return record.status || "Absent";
   }
 
+  // ✅ Auto-Checkout at 5:00 PM
+  function autoCheckoutEmployees() {
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const fivePM = 17 * 60;
+
+    if (currentMinutes >= fivePM) {
+      allEmployees.forEach((emp) => {
+        let record = attendance.find(
+          (r) => r.employeeId === emp.id && r.date === today
+        );
+
+        if (record && record.checkIn && !record.checkOut) {
+          record.checkOut = "17:00";
+          record.notes += ` | Checked out at 17:00`;
+          DataService.saveAttendance(attendance);
+        }
+      });
+      renderBoard(searchInput.value);
+    }
+  }
+
+  // ✅ Attendance Board
   function renderBoard(searchTerm = "") {
     const boardBody = document.getElementById("attendanceBoardBody");
-    boardBody.innerHTML = `<tr><td colspan="6" class="text-center">Loading...</td></tr>`;
+    boardBody.innerHTML = `<tr><td colspan="7" class="text-center">Loading...</td></tr>`;
 
     const filteredEmployees = allEmployees.filter((emp) =>
       emp.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     if (filteredEmployees.length === 0) {
-      boardBody.innerHTML = `<tr><td colspan="6" class="text-center">No employees found.</td></tr>`;
+      boardBody.innerHTML = `<tr><td colspan="7" class="text-center">No employees found.</td></tr>`;
       return;
     }
 
@@ -65,7 +95,6 @@ document.addEventListener("DOMContentLoaded", () => {
         attendance.push(record);
       }
 
-      // 👇 تحديث الحالة أوتوماتيك
       record.status = autoUpdateStatus(record);
 
       const tr = document.createElement("tr");
@@ -76,58 +105,66 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       tr.innerHTML = `
-                <td>${emp.name} <br> <small class="text-muted">${
-        emp.department || ""
-      }</small></td>
-                <td>
-                    <input type="time" class="form-control form-control-sm check-in-input" value="${
-                      record.checkIn || ""
-                    }">
-                </td>
-                <td>
-                    <input type="time" class="form-control form-control-sm check-out-input" value="${
-                      record.checkOut || ""
-                    }">
-                </td>
-                <td>
-                    <span class="badge ${
-                      record.status === "Leave"
-                        ? "bg-info"
-                        : record.status.startsWith("Absent")
-                        ? "bg-danger"
-                        : record.status.startsWith("Present")
-                        ? "bg-success"
-                        : "bg-secondary"
-                    }">${record.status}</span>
-                </td>
-                <td>
-                    <input type="text" class="form-control form-control-sm notes-input" value="${
-                      record.notes || ""
-                    }" placeholder="Add note...">
-                </td>
-                <td class="text-end">
-                    <button class="btn btn-sm btn-success save-btn" title="Save Record">
-                        <i class="bi bi-check-lg"></i>
-                    </button>
-                </td>
-            `;
+        <td>${emp.name} <br> <small class="text-muted">${emp.department || ""
+        }</small></td>
+        <td>
+            <input type="time" class="form-control form-control-sm check-in-input" value="${record.checkIn || ""
+        }">
+        </td>
+        <td>
+            <input type="time" class="form-control form-control-sm check-out-input" value="${record.checkOut || ""
+        }">
+        </td>
+        <td>
+            <span class="badge ${record.status === "Leave"
+          ? "bg-info"
+          : record.status.startsWith("Absent")
+            ? "bg-danger"
+            : record.status.startsWith("Late")
+              ? "bg-warning text-dark"
+              : record.status.startsWith("Present")
+                ? "bg-success"
+                : "bg-secondary"
+        }">${record.status}</span>
+        </td>
+        <td class="text-center">
+            ${record.minutesLate > 0 ? record.minutesLate : "-"}
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm notes-input" value="${record.notes || ""
+        }" readonly>
+        </td>
+        <td class="text-end">
+            <button class="btn btn-sm btn-success save-btn" title="Save Record">
+                <i class="bi bi-check-lg"></i>
+            </button>
+        </td>
+      `;
 
       boardBody.appendChild(tr);
+
+      // Update status when check-in changes
+      const checkInInput = tr.querySelector(".check-in-input");
+      checkInInput.addEventListener('input', () => {
+        record.checkIn = checkInInput.value;
+        record.status = autoUpdateStatus(record);
+        // Update badge
+        const badge = tr.querySelector("td:nth-child(4) .badge");
+        badge.className = `badge ${record.status === "Leave" ? "bg-info" : record.status.startsWith("Absent") ? "bg-danger" : record.status.startsWith("Late") ? "bg-warning text-dark" : record.status.startsWith("Present") ? "bg-success" : "bg-secondary"}`;
+        badge.textContent = record.status;
+        // Update minutesLate
+        const minutesTd = tr.querySelector("td:nth-child(5)");
+        minutesTd.textContent = record.minutesLate > 0 ? record.minutesLate : "-";
+        // Update notes
+        const notesInput = tr.querySelector(".notes-input");
+        notesInput.value = record.notes;
+      });
     });
   }
 
   const boardBody = document.getElementById("attendanceBoardBody");
 
-  // 🟡 Update row on change
-  boardBody.addEventListener("change", (e) => {
-    const target = e.target;
-    const tr = target.closest("tr");
-    if (!tr) return;
-
-    tr.classList.add("table-warning");
-  });
-
-  // 🟢 Save record
+  // 🟢 Save record manually
   boardBody.addEventListener("click", (e) => {
     const saveButton = e.target.closest(".save-btn");
     if (!saveButton) return;
@@ -140,47 +177,33 @@ document.addEventListener("DOMContentLoaded", () => {
       (r) => r.employeeId === employeeId && r.date === today
     );
     if (recordIndex === -1) {
-      console.error(
-        "Critical error: Record not found in attendance array on save."
-      );
+      console.error("Critical error: Record not found on save.");
       return;
     }
 
     const checkInTime = tr.querySelector(".check-in-input").value || null;
     const checkOutTime = tr.querySelector(".check-out-input").value || null;
-    const currentNotes = tr.querySelector(".notes-input").value;
 
     let record = attendance[recordIndex];
     record.checkIn = checkInTime;
     record.checkOut = checkOutTime;
-    record.notes = currentNotes;
 
-    // 👇 تحديث الحالة أوتوماتيك
-    record.status = autoUpdateStatus(record);
-
-    // 🔴 لو Leave من غير Approval
-    if (record.status === "Leave") {
-      const isApproved = approvedLeaves.some(
-        (leave) => leave.employeeId === employeeId && leave.date === today
-      );
-      if (!isApproved) {
-        record.notes = `[FLAG] Leave marked without HR approval. ${currentNotes.replace(
-          "[FLAG] Leave marked without HR approval. ",
-          ""
-        )}`;
-        showToast(
-          `Warning: Leave for ${employeeName} is not approved by HR.`,
-          "warning"
-        );
+    if (record.checkOut) {
+      if (!record.notes.includes("Checked out")) {
+        record.notes += ` | Checked out at ${record.checkOut}`;
       }
+    } else {
+      record.status = autoUpdateStatus(record);
+    }
+
+    if (record.checkIn && !record.checkOut) {
+      record.status = autoUpdateStatus(record);
     }
 
     attendance[recordIndex] = record;
     DataService.saveAttendance(attendance);
-    tr.classList.remove("table-warning");
-    showToast(`Record for ${employeeName} saved successfully.`, "success");
 
-    // rerender row to refresh status badge
+    showToast(`Record for ${employeeName} saved successfully.`, "success");
     renderBoard(searchInput.value);
   });
 
@@ -188,7 +211,8 @@ document.addEventListener("DOMContentLoaded", () => {
     renderBoard(searchInput.value);
   });
 
-  // Initial render
   renderBoard();
+
+  // ✅ Auto-checkout on page load if after 17:00
+  autoCheckoutEmployees();
 });
-//   شوف كدة يا بدر ده جزء ال security.js بعد التعديل شوفوا كدة شغال ولا لا

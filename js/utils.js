@@ -35,15 +35,14 @@ function getISODate(date = new Date()) {
  * @param {string | null} checkInTime - وقت الحضور بصيغة "HH:MM"
  * @returns {object} - { status: string, minutesLate: number }
  */
-function calculateAttendanceDetails(checkInTime) {
+function calculateAttendanceDetails(checkInTime, recordDate = getISODate()) {
     if (!checkInTime) {
         return { status: 'Absent', minutesLate: 0 };
     }
 
-    const today = getISODate();
-    const startTime = new Date(`${today}T${AppConfig.WORK_START_TIME}`);
-    const lateThreshold = new Date(`${today}T${AppConfig.LATE_THRESHOLD_TIME}`);
-    const checkInDateTime = new Date(`${today}T${checkInTime}`);
+    const startTime = new Date(`${recordDate}T${AppConfig.WORK_START_TIME}`);
+    const lateThreshold = new Date(`${recordDate}T${AppConfig.LATE_THRESHOLD_TIME}`);
+    const checkInDateTime = new Date(`${recordDate}T${checkInTime}`);
 
     if (checkInDateTime <= startTime) {
         return { status: 'Present', minutesLate: 0 };
@@ -57,6 +56,7 @@ function calculateAttendanceDetails(checkInTime) {
 
     return { status: 'Absent', minutesLate };
 }
+
 
 
 /**
@@ -107,19 +107,10 @@ const SalaryCalculator = {
      * @returns {number} - The calculated penalty amount.
      */
     getLatePenalty: function (minutesLate, dailyWage, settings) {
-        if (minutesLate <= 15) return 0; // Grace period
+        if (minutesLate <= 0) return 0; // No penalty for on time or early
 
-        const tiers = settings.latePenaltyTiers;
-        if (minutesLate >= tiers.tier1.from && minutesLate <= tiers.tier1.to) {
-            return dailyWage * (tiers.tier1.penalty / 100);
-        }
-        if (minutesLate >= tiers.tier2.from && minutesLate <= tiers.tier2.to) {
-            return dailyWage * (tiers.tier2.penalty / 100);
-        }
-        if (minutesLate >= tiers.tier3.from && minutesLate <= tiers.tier3.to) {
-            return dailyWage * (tiers.tier3.penalty / 100);
-        }
-        return 0; // No penalty if outside defined tiers
+        // Dynamic penalty: 5% of daily wage for any late arrival
+        return dailyWage * (5 / 100);
     },
 
     /**
@@ -135,7 +126,7 @@ const SalaryCalculator = {
         if (!employee) return null;
 
         const monthlySalary = employee.monthlySalary;
-        const dailyWage = monthlySalary / 30; // As per requirements
+        const dailyWage = monthlySalary / 22; // Dynamic calculation based on working days
         const hourlyRate = dailyWage / 8;
 
         const impact = {
@@ -177,9 +168,9 @@ const SalaryCalculator = {
         employeeAttendance.forEach(rec => {
             if (rec.status === 'Late' && !approvedLatePermissionDates.includes(rec.date)) {
                 const penalty = this.getLatePenalty(rec.minutesLate, dailyWage, data.settings);
+                impact.details.push({ date: rec.date, type: 'Late', amount: -penalty, reason: `${rec.minutesLate} minutes late.` });
                 if (penalty > 0) {
                     impact.latePenalty += penalty;
-                    impact.details.push({ date: rec.date, type: 'Late', amount: -penalty, reason: `${rec.minutesLate} minutes late.` });
                 }
             }
         });
@@ -306,6 +297,32 @@ function findIdealEmployee(year, month, data) {
     // TODO: Implement Tie-Breakers if needed
     return winners;
 }
+/**
+ * Updates payroll impact for a given employee immediately when attendance changes.
+ * @param {number} employeeId
+ * @param {object} details - attendance details from calculateAttendanceDetails
+ */
+function updatePayrollImpact(employeeId, details) {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+
+    const data = {
+        employees: DataService.getEmployees(),
+        attendance: DataService.getAttendance(),
+        tasks: DataService.getTasks(),
+        requests: DataService.getRequests(),
+        settings: DataService.getSettings(),
+    };
+
+    const impact = SalaryCalculator.calculateMonthlyImpact(employeeId, year, month, data);
+
+    // تخزين النتيجة في localStorage عشان HR أو payroll page تقدر تعرضها
+    localStorage.setItem("payrollImpact_" + employeeId, JSON.stringify(impact));
+
+    return impact;
+}
+
 
 
 /**
