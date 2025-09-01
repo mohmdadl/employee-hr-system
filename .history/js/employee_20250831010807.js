@@ -1,27 +1,30 @@
 // js/employee.js
 
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("employee.js script has loaded!");
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     let payrollImpact = null;
     if (!currentUser || currentUser.role !== 'Employee') {
-        // Optional: redirect to login if not an employee, though main.js should handle it.
-        // window.location.href = 'index.html';
+     
         return;
     }
-
+    console.log("Data from DataService:", DataService.getAttendance(), DataService.getTasks());
     const taskDetailsModal = new bootstrap.Modal(document.getElementById('taskDetailsModal'));
 
 
-    // --- Global State ---
+ 
     let myAttendance = DataService.getAttendance().filter(r => r.employeeId === currentUser.id);
     let myTasks = DataService.getTasks().filter(t => t.assignees.includes(currentUser.id));
     let myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
 
-    // --- Render Functions ---
+  
 
     function renderKPIs() {
-        myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
 
+      
         if (payrollImpact) {
             const deductionsKpi = document.getElementById('deductionsKpi');
             deductionsKpi.textContent = `EGP ${payrollImpact.totalDeductions.toFixed(2)}`;
@@ -29,21 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 deductionsKpi.innerHTML += ` <span class="badge bg-light text-dark">Capped</span>`;
             }
         }
-
-        // Update pending requests count
-        const pendingRequestsCount = myRequests.filter(r => r.status === 'Pending').length;
-        document.getElementById('pendingRequestsKpi').textContent = pendingRequestsCount;
-
-        // Update late permissions used count
-        const approvedLateCount = myRequests.filter(r => r.type === 'Late' && r.status === 'Approved').length;
-        document.getElementById('latePermissionsKpi').textContent = `${approvedLateCount} / ${AppConfig.LATE_PERMISSION_QUOTA_PER_MONTH}`;
-
-        // Update WFH used this week
-        const currentWeek = getWeekNumber(new Date());
-        const currentYear = new Date().getFullYear();
-        const wfhThisWeek = myRequests.filter(r => r.type === 'WFH' && r.status === 'Approved' && getWeekNumber(new Date(r.payload.requestedDate)) === currentWeek && new Date(r.payload.requestedDate).getFullYear() === currentYear).length;
-        document.getElementById('wfhKpi').textContent = `${wfhThisWeek} / ${AppConfig.WFH_QUOTA_PER_WEEK}`;
     }
+
     function renderPayrollImpact() {
         const container = document.getElementById('payrollImpactDetails');
         container.innerHTML = '';
@@ -73,43 +63,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tr>
                 `).join('')}
             </tbody>
-           <tfoot class="fw-semibold">
-    <!-- Total Deductions -->
-    <tr class="table-danger">
-        <td colspan="2" class="text-start ps-3">
-            <i class="bi bi-dash-circle me-1"></i> Total Deductions
-        </td>
-        <td class="text-danger text-end pe-3">
-            - ${payrollImpact.totalDeductions.toFixed(2)}
-        </td>
-        <td class="fst-italic text-muted">
-            ${payrollImpact.capApplied ? '(Capped at 25%)' : ''}
-        </td>
-    </tr>
-
-    <!-- Total Bonuses -->
-    <tr class="table-success">
-        <td colspan="2" class="text-start ps-3">
-            <i class="bi bi-plus-circle me-1"></i> Total Bonuses/Pay
-        </td>
-        <td class="text-success text-end pe-3">
-            + ${(payrollImpact.overtimePay + payrollImpact.bonus).toFixed(2)}
-        </td>
-        <td></td>
-    </tr>
-
-    <!-- Final Net Impact -->
-    <tr class="table-light border-top border-3">
-        <td colspan="2" class="text-start ps-3 fw-bold fs-5">
-            <i class="bi bi-cash-coin me-1"></i> Final Net Impact
-        </td>
-        <td class="fw-bold fs-5 text-end pe-3 ${payrollImpact.finalImpact >= 0 ? 'text-success' : 'text-danger'}">
-            ${payrollImpact.finalImpact.toFixed(2)}
-        </td>
-        <td></td>
-    </tr>
-</tfoot>
-
+            <tfoot>
+                <tr class="table-group-divider">
+                    <td colspan="2" class="text-end"><strong>Total Deductions:</strong></td>
+                    <td class="text-danger"><strong>- ${payrollImpact.totalDeductions.toFixed(2)}</strong></td>
+                    <td>${payrollImpact.capApplied ? '(Capped at 25%)' : ''}</td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="text-end"><strong>Total Bonuses/Pay:</strong></td>
+                    <td class="text-success"><strong>+ ${(payrollImpact.overtimePay + payrollImpact.bonus).toFixed(2)}</strong></td>
+                    <td></td>
+                </tr>
+                <tr class="fw-bold fs-5">
+                    <td colspan="2" class="text-end"><strong>Final Net Impact:</strong></td>
+                    <td class="${payrollImpact.finalImpact >= 0 ? 'text-success' : 'text-danger'}">${payrollImpact.finalImpact.toFixed(2)}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
         </table>
     `;
         container.innerHTML = detailsTable;
@@ -152,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h6 class="card-subtitle mb-2 text-body-secondary">Priority: ${task.priority}</h6>
                         <p class="card-text"><strong>Deadline:</strong> ${new Date(task.deadline).toLocaleString()}</p>
                         <p><strong>Status:</strong> ${task.status}</p>
-                        <button class="btn btn-sm btn-outline-info view-task-btn" data-task-id="${task.taskId}">View Details</button>
+                           <button class="btn btn-sm btn-outline-info view-task-btn" data-task-id="${task.taskId}">View Details</button>
                     </div>
                 </div>
             `;
@@ -193,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             dynamicFieldsContainer.innerHTML = fieldsHTML;
 
-            // Check Quotas
+
             const requestDateInput = document.getElementById('requestDate');
             requestDateInput.addEventListener('change', () => {
                 const selectedDate = new Date(requestDateInput.value);
@@ -214,9 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderRequestsHistory() {
         const historyList = document.getElementById('requestsHistoryList');
-
-        myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
-
         historyList.innerHTML = '';
         if (myRequests.length === 0) {
             historyList.innerHTML = `<li class="list-group-item">You have not submitted any requests.</li>`;
@@ -231,22 +198,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const li = document.createElement('li');
             li.className = 'list-group-item d-flex justify-content-between align-items-start';
             li.innerHTML = `
-            <div class="ms-2 me-auto">
-                <div class="fw-bold">${req.type} - ${req.payload.requestedDate}</div>
-                <small>Submitted: ${req.createdAt}</small>
-                ${req.status === 'Rejected' ? `<div class="text-danger small fst-italic">Reason: ${req.managerComment}</div>` : ''}
-            </div>
-            <div class="d-flex align-items-center">
-                <span class="badge ${statusBadges[req.status]} rounded-pill me-2">${req.status}</span>
-                ${req.status === 'Pending' ? `<button class="btn btn-sm btn-outline-danger cancel-request-btn" data-request-id="${req.id}" title="Cancel Request"><i class="bi bi-x-circle"></i></button>` : ''}
-            </div>
-        `;
+                <div class="ms-2 me-auto">
+                    <div class="fw-bold">${req.type} - ${req.payload.requestedDate}</div>
+                    <small>Submitted: ${req.createdAt}</small>
+                    ${req.status === 'Rejected' ? `<div class="text-danger small fst-italic">Reason: ${req.managerComment}</div>` : ''}
+                </div>
+                <span class="badge ${statusBadges[req.status]} rounded-pill">${req.status}</span>
+            `;
             historyList.appendChild(li);
         });
     }
 
-
-    // NEW function to show the task details in the modal
+   
     function showTaskDetails(task) {
         document.getElementById('taskDetailsModalLabel').textContent = task.title;
         const body = document.getElementById('taskDetailsModalBody');
@@ -272,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         taskDetailsModal.show();
     }
 
-    // --- Event Listeners ---
+
     document.getElementById('taskDetailsModalFooter').addEventListener('click', (e) => {
         if (e.target.id === 'saveTaskStatusBtn') {
             const taskId = parseInt(e.target.dataset.taskId);
@@ -285,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 allTasks[taskIndex].status = newStatus;
                 DataService.saveTasks(allTasks);
 
-                // Refresh local state and re-render
+               
                 myTasks = allTasks.filter(t => t.assignees.includes(currentUser.id));
                 renderTasks();
 
@@ -305,58 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-
-    document.getElementById('requestsHistoryList').addEventListener('click', (e) => {
-        if (e.target.classList.contains('cancel-request-btn') || e.target.closest('.cancel-request-btn')) {
-            const requestId = parseInt(e.target.dataset.requestId || e.target.closest('.cancel-request-btn').dataset.requestId);
-            const allRequests = DataService.getRequests();
-            const requestIndex = allRequests.findIndex(r => r.id === requestId);
-
-            if (requestIndex !== -1) {
-                allRequests.splice(requestIndex, 1);
-                DataService.saveRequests(allRequests);
-
-                // Update local state and re-render
-                myRequests = allRequests.filter(r => r.employeeId === currentUser.id);
-                renderRequestsHistory();
-                renderKPIs();
-
-                showToast('Request cancelled successfully!', 'success');
-            }
-        }
-    });
-    document.addEventListener('DOMContentLoaded', () => {
-        const refreshBtn = document.getElementById('refreshRequestsBtn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                // Refresh data
-                myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
-                myAttendance = DataService.getAttendance().filter(r => r.employeeId === currentUser.id);
-
-                // Recalculate payrollImpact including all late days from attendance
-                const allData = {
-                    employees: DataService.getEmployees(),
-                    attendance: DataService.getAttendance(),
-                    tasks: DataService.getTasks(),
-                    requests: DataService.getRequests(),
-                    settings: DataService.getSettings()
-                };
-                const today = new Date();
-                payrollImpact = SalaryCalculator.calculateMonthlyImpact(currentUser.id, today.getFullYear(), today.getMonth(), allData);
-
-                // Re-render
-                renderRequestsHistory();
-                renderKPIs();
-                renderAttendance();
-                renderPayrollImpact();
-                showToast('Requests, KPIs, Attendance & Payroll Impact refreshed!', 'info');
-            });
-        }
-
-        renderKPIs();
-        renderRequestsHistory();
-    });
-
     document.getElementById('requestForm').addEventListener('submit', (e) => {
         e.preventDefault();
 
@@ -390,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allRequests.push(newRequest);
         DataService.saveRequests(allRequests);
 
-        // Update local state and re-render
+  
         myRequests = allRequests.filter(r => r.employeeId === currentUser.id);
         renderRequestsHistory();
         renderKPIs();
@@ -401,10 +312,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // --- Initial Page Load ---
+   
 
     function init() {
-        // --- Get all data needed for calculation ---
+     
         const allData = {
             employees: DataService.getEmployees(),
             attendance: DataService.getAttendance(),
@@ -414,16 +325,16 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const today = new Date();
 
-        // --- Calculate the payroll impact for the current user and month ---
+       
         payrollImpact = SalaryCalculator.calculateMonthlyImpact(currentUser.id, today.getFullYear(), today.getMonth(), allData);
 
-        // --- Now render everything ---
+       
         renderKPIs();
         renderAttendance();
         renderTasks();
         renderRequestForm();
         renderRequestsHistory();
-        renderPayrollImpact(); // <-- Call the new render function
+        renderPayrollImpact(); 
     }
 
     init();
