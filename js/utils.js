@@ -35,15 +35,14 @@ function getISODate(date = new Date()) {
  * @param {string | null} checkInTime - وقت الحضور بصيغة "HH:MM"
  * @returns {object} - { status: string, minutesLate: number }
  */
-function calculateAttendanceDetails(checkInTime) {
+function calculateAttendanceDetails(checkInTime, recordDate = getISODate()) {
     if (!checkInTime) {
         return { status: 'Absent', minutesLate: 0 };
     }
 
-    const today = getISODate();
-    const startTime = new Date(`${today}T${AppConfig.WORK_START_TIME}`);
-    const lateThreshold = new Date(`${today}T${AppConfig.LATE_THRESHOLD_TIME}`);
-    const checkInDateTime = new Date(`${today}T${checkInTime}`);
+    const startTime = new Date(`${recordDate}T${AppConfig.WORK_START_TIME}`);
+    const lateThreshold = new Date(`${recordDate}T${AppConfig.LATE_THRESHOLD_TIME}`);
+    const checkInDateTime = new Date(`${recordDate}T${checkInTime}`);
 
     if (checkInDateTime <= startTime) {
         return { status: 'Present', minutesLate: 0 };
@@ -57,6 +56,7 @@ function calculateAttendanceDetails(checkInTime) {
 
     return { status: 'Absent', minutesLate };
 }
+
 
 
 /**
@@ -306,6 +306,32 @@ function findIdealEmployee(year, month, data) {
     // TODO: Implement Tie-Breakers if needed
     return winners;
 }
+/**
+ * Updates payroll impact for a given employee immediately when attendance changes.
+ * @param {number} employeeId
+ * @param {object} details - attendance details from calculateAttendanceDetails
+ */
+function updatePayrollImpact(employeeId, details) {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+
+    const data = {
+        employees: DataService.getEmployees(),
+        attendance: DataService.getAttendance(),
+        tasks: DataService.getTasks(),
+        requests: DataService.getRequests(),
+        settings: DataService.getSettings(),
+    };
+
+    const impact = SalaryCalculator.calculateMonthlyImpact(employeeId, year, month, data);
+
+    // تخزين النتيجة في localStorage عشان HR أو payroll page تقدر تعرضها
+    localStorage.setItem("payrollImpact_" + employeeId, JSON.stringify(impact));
+
+    return impact;
+}
+
 
 
 /**

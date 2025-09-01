@@ -330,9 +330,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const refreshBtn = document.getElementById('refreshRequestsBtn');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => {
+                // Refresh data
+                myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
+                myAttendance = DataService.getAttendance().filter(r => r.employeeId === currentUser.id);
+
+                // Recalculate payrollImpact
+                const allData = {
+                    employees: DataService.getEmployees(),
+                    attendance: DataService.getAttendance(),
+                    tasks: DataService.getTasks(),
+                    requests: DataService.getRequests(),
+                    settings: DataService.getSettings()
+                };
+                const today = new Date();
+                payrollImpact = SalaryCalculator.calculateMonthlyImpact(currentUser.id, today.getFullYear(), today.getMonth(), allData);
+
+                // Re-render
                 renderRequestsHistory();
                 renderKPIs();
-                showToast('Requests & KPIs refreshed!', 'info');
+                renderAttendance();
+                renderPayrollImpact();
+                showToast('Requests, KPIs, Attendance & Payroll Impact refreshed!', 'info');
             });
         }
 
