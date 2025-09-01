@@ -1,4 +1,4 @@
-// js/security.js (Final Clean Version - Auto Notes / No HR)
+// js/security.js
 
 document.addEventListener("DOMContentLoaded", () => {
   const today = getISODate();
@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   let attendance = DataService.getAttendance();
 
-  // ✅ Set Status & Set Notes
+  // ✅ Set Status & Notes based on check-in
   function autoUpdateStatus(record) {
     record.minutesLate = 0; // reset default
     record.notes = record.notes || "";
@@ -18,11 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!record.checkIn && !record.checkOut) {
       record.notes = "Absent (no check-in)";
       return "Absent";
-    }
-
-    if (record.checkOut) {
-      record.notes = "Checked out at " + record.checkOut;
-      return "Leave";
     }
 
     if (record.checkIn) {
@@ -61,8 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (record && record.checkIn && !record.checkOut) {
           record.checkOut = "17:00";
-          record.status = "Leave";
-          record.notes = "Checked out at 17:00";
+          record.notes += ` | Checked out at 17:00`;
           DataService.saveAttendance(attendance);
         }
       });
@@ -70,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ✅Attendence Board
+  // ✅ Attendance Board
   function renderBoard(searchTerm = "") {
     const boardBody = document.getElementById("attendanceBoardBody");
     boardBody.innerHTML = `<tr><td colspan="7" class="text-center">Loading...</td></tr>`;
@@ -114,39 +108,34 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       tr.innerHTML = `
-        <td>${emp.name} <br> <small class="text-muted">${
-        emp.department || ""
-      }</small></td>
+        <td>${emp.name} <br> <small class="text-muted">${emp.department || ""
+        }</small></td>
         <td>
-            <input type="time" class="form-control form-control-sm check-in-input" value="${
-              record.checkIn || ""
-            }">
+            <input type="time" class="form-control form-control-sm check-in-input" value="${record.checkIn || ""
+        }">
         </td>
         <td>
-            <input type="time" class="form-control form-control-sm check-out-input" value="${
-              record.checkOut || ""
-            }">
+            <input type="time" class="form-control form-control-sm check-out-input" value="${record.checkOut || ""
+        }">
         </td>
         <td>
-            <span class="badge ${
-              record.status === "Leave"
-                ? "bg-info"
-                : record.status.startsWith("Absent")
-                ? "bg-danger"
-                : record.status.startsWith("Late")
-                ? "bg-warning text-dark"
-                : record.status.startsWith("Present")
+            <span class="badge ${record.status === "Leave"
+          ? "bg-info"
+          : record.status.startsWith("Absent")
+            ? "bg-danger"
+            : record.status.startsWith("Late")
+              ? "bg-warning text-dark"
+              : record.status.startsWith("Present")
                 ? "bg-success"
                 : "bg-secondary"
-            }">${record.status}</span>
+        }">${record.status}</span>
         </td>
         <td class="text-center">
             ${record.minutesLate > 0 ? record.minutesLate : "-"}
         </td>
         <td>
-            <input type="text" class="form-control form-control-sm notes-input" value="${
-              record.notes || ""
-            }" readonly>
+            <input type="text" class="form-control form-control-sm notes-input" value="${record.notes || ""
+        }" readonly>
         </td>
         <td class="text-end">
             <button class="btn btn-sm btn-success save-btn" title="Save Record">
@@ -161,7 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const boardBody = document.getElementById("attendanceBoardBody");
 
-  // 🟢 Save record Manual
+  // 🟢 Save record manually
   boardBody.addEventListener("click", (e) => {
     const saveButton = e.target.closest(".save-btn");
     if (!saveButton) return;
@@ -186,9 +175,16 @@ document.addEventListener("DOMContentLoaded", () => {
     record.checkOut = checkOutTime;
 
     if (record.checkOut) {
-      record.status = "Leave";
-      record.notes = "Checked out at " + record.checkOut;
+      // 🟢 ما نغيرش Status
+      if (!record.notes.includes("Checked out")) {
+        record.notes += ` | Checked out at ${record.checkOut}`;
+      }
     } else {
+      record.status = autoUpdateStatus(record);
+    }
+
+    // 🟢 لو عمل تعديل على Check-in لازم نعيد حساب الـ Status
+    if (record.checkIn && !record.checkOut) {
       record.status = autoUpdateStatus(record);
     }
 
