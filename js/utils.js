@@ -92,12 +92,6 @@ function showToast(message, type = 'success') {
 }
 
 
-// js/utils.js (append this code)
-
-// =================================================================
-// --- Salary Impact Calculation Module ---
-// =================================================================
-
 const SalaryCalculator = {
     /**
      * Calculates the penalty for a single late attendance record.
@@ -107,9 +101,8 @@ const SalaryCalculator = {
      * @returns {number} - The calculated penalty amount.
      */
     getLatePenalty: function (minutesLate, dailyWage, settings) {
-        if (minutesLate <= 0) return 0; // No penalty for on time or early
+        if (minutesLate <= 0) return 0; 
 
-        // Dynamic penalty: 5% of daily wage for any late arrival
         return dailyWage * (5 / 100);
     },
 
@@ -219,12 +212,6 @@ const SalaryCalculator = {
         });
 
 
-        // 4. TODO: Calculate Overtime Pay
-        // This would be similar, filtering for approved Overtime requests.
-
-        // 5. TODO: Calculate Ideal Employee Bonus
-
-        // --- Apply Monthly Cap ---
         impact.totalDeductions = impact.latePenalty + impact.absencePenalty + impact.taskPenalty;
         const capAmount = monthlySalary * (data.settings.deductionCap / 100);
         if (impact.totalDeductions > capAmount) {
@@ -237,13 +224,6 @@ const SalaryCalculator = {
         return impact;
     }
 };
-
-
-// js/utils.js (append this code)
-
-// =================================================================
-// --- Ideal Employee Calculation ---
-// =================================================================
 
 /**
  * Determines the Ideal Employee(s) of the Month based on strict criteria.
