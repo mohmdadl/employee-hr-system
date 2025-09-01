@@ -1,4 +1,4 @@
-// js/security.js (Final Clean Version - Auto Notes / No HR)
+// js/security.js (Final Clean Version - Auto Notes / WFH Auto-Present)
 
 document.addEventListener("DOMContentLoaded", () => {
   const today = getISODate();
@@ -70,6 +70,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // ✅ Mark WFH as Present
+  function markWFHAsPresent(employeeId, date) {
+    let record = attendance.find(
+      (r) => r.employeeId === employeeId && r.date === date
+    );
+
+    if (!record) {
+      record = {
+        id: Date.now() + employeeId,
+        employeeId: employeeId,
+        date: date,
+        checkIn: null,
+        checkOut: null,
+        status: "Present",
+        minutesLate: 0,
+        notes: "WFH approved",
+      };
+      attendance.push(record);
+    } else {
+      record.status = "Present";
+      record.notes = "WFH approved";
+      record.minutesLate = 0;
+    }
+
+    DataService.saveAttendance(attendance);
+    renderBoard(searchInput.value);
+  }
+
   // ✅Attendence Board
   function renderBoard(searchTerm = "") {
     const boardBody = document.getElementById("attendanceBoardBody");
@@ -117,37 +145,29 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${emp.name} <br> <small class="text-muted">${
         emp.department || ""
       }</small></td>
-        <td>
-            <input type="time" class="form-control form-control-sm check-in-input" value="${
-              record.checkIn || ""
-            }">
-        </td>
-        <td>
-            <input type="time" class="form-control form-control-sm check-out-input" value="${
-              record.checkOut || ""
-            }">
-        </td>
-        <td>
-            <span class="badge ${
-              record.status === "Leave"
-                ? "bg-info"
-                : record.status.startsWith("Absent")
-                ? "bg-danger"
-                : record.status.startsWith("Late")
-                ? "bg-warning text-dark"
-                : record.status.startsWith("Present")
-                ? "bg-success"
-                : "bg-secondary"
-            }">${record.status}</span>
-        </td>
-        <td class="text-center">
-            ${record.minutesLate > 0 ? record.minutesLate : "-"}
-        </td>
-        <td>
-            <input type="text" class="form-control form-control-sm notes-input" value="${
-              record.notes || ""
-            }" readonly>
-        </td>
+        <td><input type="time" class="form-control form-control-sm check-in-input" value="${
+          record.checkIn || ""
+        }"></td>
+        <td><input type="time" class="form-control form-control-sm check-out-input" value="${
+          record.checkOut || ""
+        }"></td>
+        <td><span class="badge ${
+          record.status === "Leave"
+            ? "bg-info"
+            : record.status.startsWith("Absent")
+            ? "bg-danger"
+            : record.status.startsWith("Late")
+            ? "bg-warning text-dark"
+            : record.status.startsWith("Present")
+            ? "bg-success"
+            : "bg-secondary"
+        }">${record.status}</span></td>
+        <td class="text-center">${
+          record.minutesLate > 0 ? record.minutesLate : "-"
+        }</td>
+        <td><input type="text" class="form-control form-control-sm notes-input" value="${
+          record.notes || ""
+        }" readonly></td>
         <td class="text-end">
             <button class="btn btn-sm btn-success save-btn" title="Save Record">
                 <i class="bi bi-check-lg"></i>
