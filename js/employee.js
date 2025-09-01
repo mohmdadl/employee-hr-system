@@ -20,9 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Render Functions ---
 
     function renderKPIs() {
-        // ... existing KPI logic ...
+        myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
 
-        // New deduction KPI logic
         if (payrollImpact) {
             const deductionsKpi = document.getElementById('deductionsKpi');
             deductionsKpi.textContent = `EGP ${payrollImpact.totalDeductions.toFixed(2)}`;
@@ -34,8 +33,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update pending requests count
         const pendingRequestsCount = myRequests.filter(r => r.status === 'Pending').length;
         document.getElementById('pendingRequestsKpi').textContent = pendingRequestsCount;
-    }
 
+        // Update late permissions used count
+        const approvedLateCount = myRequests.filter(r => r.type === 'Late' && r.status === 'Approved').length;
+        document.getElementById('latePermissionsKpi').textContent = `${approvedLateCount} / ${AppConfig.LATE_PERMISSION_QUOTA_PER_MONTH}`;
+
+        // Update WFH used this week
+        const currentWeek = getWeekNumber(new Date());
+        const currentYear = new Date().getFullYear();
+        const wfhThisWeek = myRequests.filter(r => r.type === 'WFH' && r.status === 'Approved' && getWeekNumber(new Date(r.payload.requestedDate)) === currentWeek && new Date(r.payload.requestedDate).getFullYear() === currentYear).length;
+        document.getElementById('wfhKpi').textContent = `${wfhThisWeek} / ${AppConfig.WFH_QUOTA_PER_WEEK}`;
+    }
     function renderPayrollImpact() {
         const container = document.getElementById('payrollImpactDetails');
         container.innerHTML = '';
@@ -206,6 +214,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderRequestsHistory() {
         const historyList = document.getElementById('requestsHistoryList');
+
+        // ✅ جِب أحدث نسخة من requests
+        myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
+
         historyList.innerHTML = '';
         if (myRequests.length === 0) {
             historyList.innerHTML = `<li class="list-group-item">You have not submitted any requests.</li>`;
@@ -220,19 +232,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const li = document.createElement('li');
             li.className = 'list-group-item d-flex justify-content-between align-items-start';
             li.innerHTML = `
-                <div class="ms-2 me-auto">
-                    <div class="fw-bold">${req.type} - ${req.payload.requestedDate}</div>
-                    <small>Submitted: ${req.createdAt}</small>
-                    ${req.status === 'Rejected' ? `<div class="text-danger small fst-italic">Reason: ${req.managerComment}</div>` : ''}
-                </div>
-                <div class="d-flex align-items-center">
-                    <span class="badge ${statusBadges[req.status]} rounded-pill me-2">${req.status}</span>
-                    ${req.status === 'Pending' ? `<button class="btn btn-sm btn-outline-danger cancel-request-btn" data-request-id="${req.id}" title="Cancel Request"><i class="bi bi-x-circle"></i></button>` : ''}
-                </div>
-            `;
+            <div class="ms-2 me-auto">
+                <div class="fw-bold">${req.type} - ${req.payload.requestedDate}</div>
+                <small>Submitted: ${req.createdAt}</small>
+                ${req.status === 'Rejected' ? `<div class="text-danger small fst-italic">Reason: ${req.managerComment}</div>` : ''}
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="badge ${statusBadges[req.status]} rounded-pill me-2">${req.status}</span>
+                ${req.status === 'Pending' ? `<button class="btn btn-sm btn-outline-danger cancel-request-btn" data-request-id="${req.id}" title="Cancel Request"><i class="bi bi-x-circle"></i></button>` : ''}
+            </div>
+        `;
             historyList.appendChild(li);
         });
     }
+
 
     // NEW function to show the task details in the modal
     function showTaskDetails(task) {
@@ -313,6 +326,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+    document.addEventListener('DOMContentLoaded', () => {
+        const refreshBtn = document.getElementById('refreshRequestsBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                renderRequestsHistory();
+                renderKPIs();
+                showToast('Requests & KPIs refreshed!', 'info');
+            });
+        }
+
+        renderKPIs();
+        renderRequestsHistory();
+    });
+
     document.getElementById('requestForm').addEventListener('submit', (e) => {
         e.preventDefault();
 
