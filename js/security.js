@@ -9,7 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let attendance = DataService.getAttendance();
     let approvedLeaves = DataService.getApprovedLeaves ? DataService.getApprovedLeaves() : [];
 
-// js/security.js (New and Improved renderBoard function)
+  // ✅ Set Status & Notes based on check-in
+  function autoUpdateStatus(record) {
+    record.minutesLate = 0; // reset default
+    record.notes = record.notes || "";
 
 function renderBoard(searchTerm = '') {
     const boardBody = document.getElementById('attendanceBoardBody');
@@ -154,5 +157,5 @@ function renderBoard(searchTerm = '') {
     searchInput.addEventListener("input", (e) => renderBoard(e.target.value));
 
     // --- INITIALIZATION ---
-    renderBoard();
+    renderBoard();}
 });

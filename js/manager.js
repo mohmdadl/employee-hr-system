@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    
+
     const createTaskModal = new bootstrap.Modal(document.getElementById('createTaskModal'));
     const rejectionModal = new bootstrap.Modal(document.getElementById('rejectionModal'));
 
@@ -119,16 +119,41 @@ document.addEventListener('DOMContentLoaded', () => {
         const requestIndex = allRequests.findIndex(r => r.id === requestId);
         if (requestIndex === -1) return;
 
-        allRequests[requestIndex].status = 'Approved';
-        allRequests[requestIndex].managerComment = 'Approved';
-        allRequests[requestIndex].decidedAt = getISODate();
+        const request = allRequests[requestIndex];
+
+        request.status = 'Approved';
+        request.managerComment = 'Approved';
+        request.decidedAt = getISODate();
+
+        // 🟢 Ensure required payload fields exist
+        if (!request.payload) request.payload = {};
+
+        if (request.type === "Late") {
+            if (!request.payload.requestedDate) {
+                request.payload.requestedDate = getISODate(); // Default to today
+            }
+            if (!request.payload.minutesExpectedLate) {
+                request.payload.minutesExpectedLate = 15; // Default grace minutes
+            }
+        }
+
+        if (request.type === "WFH" && !request.payload.requestedDate) {
+            request.payload.requestedDate = getISODate();
+        }
+
+        if (request.type === "Overtime" && !request.payload.requestedDate) {
+            request.payload.requestedDate = getISODate();
+        }
+
+        allRequests[requestIndex] = request;
         DataService.saveRequests(allRequests);
-        
-        myTeamRequests = allRequests.filter(r => myTeamIds.includes(r.employeeId)); // Refresh state
+
+        myTeamRequests = allRequests.filter(r => myTeamIds.includes(r.employeeId)); // Refresh
         renderKPIs();
         renderApprovalsQueue();
         showToast('Request approved successfully!', 'success');
     }
+
 
 
     function handleRejection(requestId, reason) {
@@ -171,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         myTeamTasks = allTasks.filter(t => t.assignees.some(id => myTeamIds.includes(id))); // Refresh state
         renderTeamTasks();
         renderKPIs();
-        
+
         createTaskModal.hide();
         createTaskForm.reset();
         taskDeadlineInput.classList.remove("is-invalid");
