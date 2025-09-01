@@ -107,19 +107,10 @@ const SalaryCalculator = {
      * @returns {number} - The calculated penalty amount.
      */
     getLatePenalty: function (minutesLate, dailyWage, settings) {
-        if (minutesLate <= 15) return 0; // Grace period
+        if (minutesLate <= 0) return 0; // No penalty for on time or early
 
-        const tiers = settings.latePenaltyTiers;
-        if (minutesLate >= tiers.tier1.from && minutesLate <= tiers.tier1.to) {
-            return dailyWage * (tiers.tier1.penalty / 100);
-        }
-        if (minutesLate >= tiers.tier2.from && minutesLate <= tiers.tier2.to) {
-            return dailyWage * (tiers.tier2.penalty / 100);
-        }
-        if (minutesLate >= tiers.tier3.from && minutesLate <= tiers.tier3.to) {
-            return dailyWage * (tiers.tier3.penalty / 100);
-        }
-        return 0; // No penalty if outside defined tiers
+        // Dynamic penalty: 5% of daily wage for any late arrival
+        return dailyWage * (5 / 100);
     },
 
     /**
@@ -135,7 +126,7 @@ const SalaryCalculator = {
         if (!employee) return null;
 
         const monthlySalary = employee.monthlySalary;
-        const dailyWage = monthlySalary / 30; // As per requirements
+        const dailyWage = monthlySalary / 22; // Dynamic calculation based on working days
         const hourlyRate = dailyWage / 8;
 
         const impact = {
@@ -177,9 +168,9 @@ const SalaryCalculator = {
         employeeAttendance.forEach(rec => {
             if (rec.status === 'Late' && !approvedLatePermissionDates.includes(rec.date)) {
                 const penalty = this.getLatePenalty(rec.minutesLate, dailyWage, data.settings);
+                impact.details.push({ date: rec.date, type: 'Late', amount: -penalty, reason: `${rec.minutesLate} minutes late.` });
                 if (penalty > 0) {
                     impact.latePenalty += penalty;
-                    impact.details.push({ date: rec.date, type: 'Late', amount: -penalty, reason: `${rec.minutesLate} minutes late.` });
                 }
             }
         });

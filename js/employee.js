@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
                 myAttendance = DataService.getAttendance().filter(r => r.employeeId === currentUser.id);
 
-                // Recalculate payrollImpact
+                // Recalculate payrollImpact including all late days from attendance
                 const allData = {
                     employees: DataService.getEmployees(),
                     attendance: DataService.getAttendance(),

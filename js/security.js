@@ -29,13 +29,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (checkInMinutes <= nineAM) {
         record.notes = `On time (arrived at ${record.checkIn})`;
         return "Present";
-      } else if (checkInMinutes > nineAM && checkInMinutes <= elevenAM) {
-        record.minutesLate = checkInMinutes - nineAM;
-        record.notes = `Late by ${record.minutesLate} minutes`;
-        return "Late";
       } else {
-        record.notes = `Absent (arrived at ${record.checkIn})`;
-        return "Absent";
+        record.minutesLate = checkInMinutes - nineAM;
+        record.notes = `Late by ${record.minutesLate} minutes (arrived at ${record.checkIn})`;
+        return "Late";
       }
     }
 
@@ -145,6 +142,23 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
 
       boardBody.appendChild(tr);
+
+      // Update status when check-in changes
+      const checkInInput = tr.querySelector(".check-in-input");
+      checkInInput.addEventListener('input', () => {
+        record.checkIn = checkInInput.value;
+        record.status = autoUpdateStatus(record);
+        // Update badge
+        const badge = tr.querySelector("td:nth-child(4) .badge");
+        badge.className = `badge ${record.status === "Leave" ? "bg-info" : record.status.startsWith("Absent") ? "bg-danger" : record.status.startsWith("Late") ? "bg-warning text-dark" : record.status.startsWith("Present") ? "bg-success" : "bg-secondary"}`;
+        badge.textContent = record.status;
+        // Update minutesLate
+        const minutesTd = tr.querySelector("td:nth-child(5)");
+        minutesTd.textContent = record.minutesLate > 0 ? record.minutesLate : "-";
+        // Update notes
+        const notesInput = tr.querySelector(".notes-input");
+        notesInput.value = record.notes;
+      });
     });
   }
 
