@@ -189,7 +189,6 @@ document.addEventListener("DOMContentLoaded", () => {
     record.checkOut = checkOutTime;
 
     if (record.checkOut) {
-      // 🟢 ما نغيرش Status
       if (!record.notes.includes("Checked out")) {
         record.notes += ` | Checked out at ${record.checkOut}`;
       }
@@ -197,7 +196,6 @@ document.addEventListener("DOMContentLoaded", () => {
       record.status = autoUpdateStatus(record);
     }
 
-    // 🟢 لو عمل تعديل على Check-in لازم نعيد حساب الـ Status
     if (record.checkIn && !record.checkOut) {
       record.status = autoUpdateStatus(record);
     }

@@ -215,7 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderRequestsHistory() {
         const historyList = document.getElementById('requestsHistoryList');
 
-        // ✅ جِب أحدث نسخة من requests
         myRequests = DataService.getRequests().filter(r => r.employeeId === currentUser.id);
 
         historyList.innerHTML = '';
