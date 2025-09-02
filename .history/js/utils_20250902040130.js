@@ -100,24 +100,12 @@ const SalaryCalculator = {
      * @param {object} settings - The HR settings object containing penalty tiers.
      * @returns {number} - The calculated penalty amount.
      */
-    // In js/utils.js, inside the SalaryCalculator object
-
     getLatePenalty: function (minutesLate, dailyWage, settings) {
-        // This is the correct, tier-based logic from the requirements
-        if (minutesLate <= 15) return 0; // 1-15 min grace period without approved permission
+        if (minutesLate <= 0) return 0; 
 
-        const tiers = settings.latePenaltyTiers;
-        if (minutesLate >= tiers.tier1.from && minutesLate <= tiers.tier1.to) {
-            return dailyWage * (tiers.tier1.penalty / 100);
-        }
-        if (minutesLate >= tiers.tier2.from && minutesLate <= tiers.tier2.to) {
-            return dailyWage * (tiers.tier2.penalty / 100);
-        }
-        if (minutesLate >= tiers.tier3.from && minutesLate <= tiers.tier3.to) {
-            return dailyWage * (tiers.tier3.penalty / 100);
-        }
-        return 0; // No penalty if it falls outside the tiers
+        return dailyWage * (5 / 100);
     },
+
     /**
      * Calculates all financial impacts for a single employee for a given month.
      * @param {number} employeeId - The ID of the employee.
