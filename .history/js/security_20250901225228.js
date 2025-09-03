@@ -1,28 +1,21 @@
-// js/security.js (The True Final "Golden" Version)
+// js/security.js (Final Merged Version)
 
 document.addEventListener('DOMContentLoaded', () => {
-    // =================================================================
-    // --- 1. SCRIPT INITIALIZATION & STATE ---
-    // =================================================================
-    const today = getISODate(); // Assumes getISODate is in utils.js
-    const todayDateEl = document.getElementById("todayDate");
-    if (todayDateEl) {
-        todayDateEl.textContent = today;
-    }
+    const today = getISODate();
+    document.getElementById("todayDate").textContent = today;
     const searchInput = document.getElementById("searchInput");
-    const boardBody = document.getElementById("attendanceBoardBody");
 
-    // Fetch all necessary data at the start
+    // --- STATE INITIALIZATION (From both branches) ---
     let allEmployees = DataService.getEmployees().filter(e => e.role === 'Employee');
     let attendance = DataService.getAttendance();
-    let allRequests = DataService.getRequests();
+    // This is the critical addition from your 'feature' branch
+    let allRequests = DataService.getRequests(); 
+    let approvedLeaves = DataService.getApprovedLeaves ? DataService.getApprovedLeaves() : [];
 
 
-    // =================================================================
-    // --- 2. RENDER FUNCTION ---
-    // =================================================================
-
+    // --- RENDER FUNCTION (The Merged "Best of Both Worlds" Version) ---
     function renderBoard(searchTerm = "") {
+        const boardBody = document.getElementById("attendanceBoardBody");
         boardBody.innerHTML = `<tr><td colspan="6" class="text-center">Loading...</td></tr>`;
 
         const filteredEmployees = allEmployees.filter(emp => emp.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -35,14 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
         filteredEmployees.forEach(emp => {
             let record = attendance.find(r => r.employeeId === emp.id && r.date === today);
 
-            // Check for an approved request for today BEFORE creating a default record
-            const approvedRequest = allRequests.find(r =>
-                r.employeeId === emp.id &&
+            // --- Logic from your FEATURE branch to check for approved requests ---
+            const approvedRequest = allRequests.find(r => 
+                r.employeeId === emp.id && 
                 r.payload.requestedDate === today &&
                 r.status === 'Approved'
             );
 
-            // If no record exists yet, but there IS an approved request, create one based on it.
             if (!record && approvedRequest) {
                 let newStatus = 'Absent';
                 let newNotes = '';
@@ -57,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 attendance.push(record);
             }
 
-            // If still no record, create the default 'Absent' one
             if (!record) {
                 record = { id: Date.now(), employeeId: emp.id, date: today, checkIn: null, checkOut: null, status: 'Absent', minutesLate: 0, notes: '' };
                 attendance.push(record);
@@ -65,12 +56,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const tr = document.createElement("tr");
             tr.dataset.employeeId = emp.id;
-            const isPreSet = record.status === 'Leave' || (record.notes && record.notes.includes('WFH'));
+            const isPreSet = record.status === 'Leave' || record.notes.includes('WFH');
 
             if (record.checkIn && !record.checkOut) {
-                tr.classList.add("table-info"); // Visual flag for missed checkout
+                tr.classList.add("table-info");
             }
 
+            // --- HTML Structure from your FEATURE branch (using <select>) ---
             tr.innerHTML = `
                 <td>${emp.name} <br> <small class="text-muted">${emp.department || ''}</small></td>
                 <td><input type="time" class="form-control form-control-sm check-in-input" value="${record.checkIn || ''}" ${isPreSet ? 'disabled' : ''}></td>
@@ -92,26 +84,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- EVENT LISTENERS (Using the more efficient method from your FEATURE branch) ---
+    const boardBody = document.getElementById("attendanceBoardBody");
 
-    // =================================================================
-    // --- 3. EVENT LISTENERS ---
-    // =================================================================
-
-    // Handles automatic status update when check-in time changes
     boardBody.addEventListener('change', (e) => {
         const tr = e.target.closest('tr');
         if (!tr) return;
-
         if (e.target.classList.contains('check-in-input')) {
             const checkInTime = e.target.value;
-            // Use the universal function from utils.js
-            const { status } = calculateAttendanceDetails(checkInTime);
+            const { status } = calculateAttendanceDetails(checkInTime); // From utils.js
             tr.querySelector('.status-select').value = status;
         }
-        tr.classList.add('table-warning'); // Mark row as having unsaved changes
+        tr.classList.add('table-warning');
     });
 
-    // Handles the final save action for a record
     boardBody.addEventListener('click', (e) => {
         const saveButton = e.target.closest('.save-btn');
         if (!saveButton) return;
@@ -120,41 +106,42 @@ document.addEventListener('DOMContentLoaded', () => {
         const employeeId = parseInt(tr.dataset.employeeId);
         const employeeName = tr.querySelector("td").firstChild.textContent.trim();
         const recordIndex = attendance.findIndex(r => r.employeeId === employeeId && r.date === today);
-
         if (recordIndex === -1) {
             console.error("Critical error: Record not found on save.");
             return;
         }
         
         const checkInTime = tr.querySelector('.check-in-input').value || null;
-        const { minutesLate } = calculateAttendanceDetails(checkInTime); // Recalculate from final time
+        const checkOutTime = tr.querySelector('.check-out-input').value || null;
+        const status = tr.querySelector('.status-select').value;
+        const notes = tr.querySelector('.notes-input').value;
+        const { minutesLate } = calculateAttendanceDetails(checkInTime);
         
-        // Update the record in the main attendance array
-        attendance[recordIndex] = {
-            ...attendance[recordIndex],
-            checkIn: checkInTime,
-            checkOut: tr.querySelector('.check-out-input').value || null,
-            status: tr.querySelector('.status-select').value,
-            notes: tr.querySelector('.notes-input').value,
-            minutesLate: minutesLate
-        };
-        
+        attendance[recordIndex] = { ...attendance[recordIndex], checkIn: checkInTime, checkOut: checkOutTime, status: status, notes: notes, minutesLate: minutesLate };
         DataService.saveAttendance(attendance);
 
-        tr.classList.remove('table-warning');
+        tr.classList.remove('table-warning', 'table-info');
+        if (checkInTime && !checkOutTime) {
+            tr.classList.add('table-info');
+        }
         showToast(`Record for ${employeeName} saved successfully.`, 'success');
-        
-        // Optionally, re-render to ensure UI is perfectly consistent after save
-        renderBoard(searchInput.value);
     });
 
-    // Handles the search input
     searchInput.addEventListener("input", (e) => renderBoard(e.target.value));
 
-
-    // =================================================================
-    // --- 4. INITIALIZATION ---
-    // =================================================================
+    // --- INITIALIZATION ---
     renderBoard();
+});```
 
-}); // End of DOMContentLoaded
+5.  **Finalize the Merge:**
+    *   After you have replaced the entire content of the conflicted file with the "golden" version above, you need to tell Git that you are done.
+    *   Save the `js/security.js` file.
+    *   In your terminal, run:
+        ```bash
+        git add js/security.js
+        git commit -m "feat: Merge dev into feature branch, resolving security.js conflicts"
+        ```
+    *   Now, you can safely push your feature branch and open a Pull Request to merge it into `dev`. It will be conflict-free.
+        ```bash
+        git push origin your-feature-branch-name
+        ```

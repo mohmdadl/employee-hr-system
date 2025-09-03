@@ -6,13 +6,17 @@
     <title>Employee Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>
+        // هذا السكربت الصغير يمنع "وميض" الصفحة عند التبديل بين الثيمات
+        // ويضمن تطبيق الثيم الصحيح من البداية
         (function () {
             const getStoredTheme = () => localStorage.getItem('theme');
             const applyTheme = (theme) => {
+                // إذا لم يكن هناك ثيم مخزن، استخدم الثيم الداكن كافتراضي
                 const themeToApply = theme || 'dark';
                 document.documentElement.setAttribute('data-bs-theme', themeToApply);
             };
 
+            // طبق الثيم فورًا عند تحميل الصفحة
             applyTheme(getStoredTheme());
         })();
     </script>
@@ -146,6 +150,7 @@
         </div>
     </div>
 
+    <!-- Add this modal to the end of employee.html -->
     <!-- Task Details Modal -->
     <div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel"
         aria-hidden="true">

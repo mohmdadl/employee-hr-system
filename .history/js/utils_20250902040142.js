@@ -11,7 +11,7 @@ const AppConfig = {
 
 
 /**
- * @param {Date} d 
+ * @param {Date} d - كائن التاريخ
  * @returns {number}
  */
 function getWeekNumber(d) {
@@ -23,7 +23,7 @@ function getWeekNumber(d) {
 }
 
 /**
- * @param {Date} date -
+ * @param {Date} date - كائن التاريخ
  * @returns {string}
  */
 function getISODate(date = new Date()) {
@@ -32,8 +32,8 @@ function getISODate(date = new Date()) {
 
 
 /**
- * @param {string | null} checkInTime 
- * @returns {object} 
+ * @param {string | null} checkInTime - وقت الحضور بصيغة "HH:MM"
+ * @returns {object} - { status: string, minutesLate: number }
  */
 function calculateAttendanceDetails(checkInTime, recordDate = getISODate()) {
     if (!checkInTime) {
@@ -60,8 +60,8 @@ function calculateAttendanceDetails(checkInTime, recordDate = getISODate()) {
 
 
 /**
- * @param {string} message 
- * @param {string} type 
+ * @param {string} message - الرسالة المراد عرضها
+ * @param {string} type - 'success', 'danger', 'info', 'warning'
  */
 function showToast(message, type = 'success') {
     const toastContainer = document.getElementById('toastContainer');
@@ -100,9 +100,11 @@ const SalaryCalculator = {
      * @param {object} settings - The HR settings object containing penalty tiers.
      * @returns {number} - The calculated penalty amount.
      */
+    // In js/utils.js, inside the SalaryCalculator object
 
     getLatePenalty: function (minutesLate, dailyWage, settings) {
-        if (minutesLate <= 15) return 0;
+        // This is the correct, tier-based logic from the requirements
+        if (minutesLate <= 15) return 0; // 1-15 min grace period without approved permission
 
         const tiers = settings.latePenaltyTiers;
         if (minutesLate >= tiers.tier1.from && minutesLate <= tiers.tier1.to) {
@@ -284,6 +286,7 @@ function findIdealEmployee(year, month, data) {
         winners.push(candidate);
     });
 
+    // TODO: Implement Tie-Breakers if needed
     return winners;
 }
 /**
@@ -306,6 +309,7 @@ function updatePayrollImpact(employeeId, details) {
 
     const impact = SalaryCalculator.calculateMonthlyImpact(employeeId, year, month, data);
 
+    // تخزين النتيجة في localStorage عشان HR أو payroll page تقدر تعرضها
     localStorage.setItem("payrollImpact_" + employeeId, JSON.stringify(impact));
 
     return impact;

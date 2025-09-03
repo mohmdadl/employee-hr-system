@@ -116,25 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    /** Renders the employee info table with all employees. */
-    function renderEmployeeTable() {
-        const tbody = document.getElementById('employeeTableBody');
-        tbody.innerHTML = '';
-        allEmployees.forEach(emp => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${emp.id}</td>
-                <td>${emp.name}</td>
-                <td>${emp.department}</td>
-                <td>${emp.role}</td>
-                <td>${emp.managerId || 'N/A'}</td>
-                <td>${emp.monthlySalary}</td>
-                <td>${emp.annualVacationDays}</td>
-                <td>${emp.email}</td>`;
-            tbody.appendChild(tr);
-        });
-    }
-
 
     // =================================================================
     // --- 3. HANDLER FUNCTIONS (Handle all user actions) ---
@@ -149,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allRequests[requestIndex].managerComment = 'Approved';
         allRequests[requestIndex].decidedAt = getISODate();
         DataService.saveRequests(allRequests);
-
+        
         myTeamRequests = allRequests.filter(r => myTeamIds.includes(r.employeeId)); // Refresh state
         renderKPIs();
         renderApprovalsQueue();
@@ -182,13 +163,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm("Are you sure you want to permanently delete this task?")) {
             return;
         }
-
+        
         const index = allTasks.findIndex(t => t.taskId === taskId);
         if (index === -1) return;
-
+        
         allTasks.splice(index, 1);
         DataService.saveTasks(allTasks);
-
+        
         myTeamTasks = allTasks.filter(t => t.assignees.some(id => myTeamIds.includes(id)));
         renderTeamTasks();
         renderKPIs(); // The overdue count might change
@@ -216,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
         myTeamTasks = allTasks.filter(t => t.assignees.some(id => myTeamIds.includes(id)));
         renderTeamTasks();
         renderKPIs();
-
+        
         createTaskModal.hide();
         createTaskForm.reset();
         taskDeadlineInput.classList.remove("is-invalid");
@@ -261,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const reason = document.getElementById('rejectionReason').value.trim();
         handleRejection(requestId, reason);
     });
-
+    
     // Listener for task list (Delete)
     teamTasksListContainer.addEventListener("click", (e) => {
         const deleteBtn = e.target.closest(".delete-task-btn");
@@ -296,7 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderKPIs();
         renderApprovalsQueue();
         renderTeamTasks();
-        renderEmployeeTable();
         populateCreateTaskForm();
     }
 

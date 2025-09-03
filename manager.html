@@ -1,283 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Manager Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script>
-      (function () {
-        const getStoredTheme = () => localStorage.getItem("theme");
-        const applyTheme = (theme) => {
-          const themeToApply = theme || "dark";
-          document.documentElement.setAttribute("data-bs-theme", themeToApply);
-        };
 
-        applyTheme(getStoredTheme());
-      })();
-    </script>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
-    />
-    <link rel="stylesheet" href="css/style.css" />
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <title>Manager Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    (function () {
+      const getStoredTheme = () => localStorage.getItem("theme");
+      const applyTheme = (theme) => {
+        const themeToApply = theme || "dark";
+        document.documentElement.setAttribute("data-bs-theme", themeToApply);
+      };
 
-  <body>
-    <nav
-      class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm"
-      id="navbarContainer"
-    ></nav>
+      applyTheme(getStoredTheme());
+    })();
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
 
-    <div class="container mt-4">
-      <div class="row mb-4">
-        <div class="col-md-6">
-          <div class="card text-bg-warning">
-            <div class="card-body">
-              <h5 class="card-title">
-                <i class="bi bi-exclamation-triangle-fill"></i> Pending
-                Approvals
-              </h5>
-              <p class="card-text fs-2" id="pendingApprovalsKpi">0</p>
-              <a href="#approvals-tab-pane" class="card-link text-white"
-                >Go to Approvals &raquo;</a
-              >
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card text-bg-danger">
-            <div class="card-body">
-              <h5 class="card-title">
-                <i class="bi bi-calendar-x-fill"></i> Overdue Team Tasks
-              </h5>
-              <p class="card-text fs-2" id="overdueTasksKpi">0</p>
-              <a href="#team-tasks-tab-pane" class="card-link text-white"
-                >Go to Tasks &raquo;</a
-              >
-            </div>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm" id="navbarContainer"></nav>
+
+  <div class="container mt-4">
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card text-bg-warning">
+          <div class="card-body">
+            <h5 class="card-title">
+              <i class="bi bi-exclamation-triangle-fill"></i> Pending
+              Approvals
+            </h5>
+            <p class="card-text fs-2" id="pendingApprovalsKpi">0</p>
+            <a href="#approvals-tab-pane" class="card-link text-white">Go to Approvals &raquo;</a>
           </div>
         </div>
       </div>
-
-      <ul class="nav nav-tabs" id="managerTab" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button
-            class="nav-link active"
-            id="approvals-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#approvals-tab-pane"
-            type="button"
-            role="tab"
-          >
-            Approvals Queue
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button
-            class="nav-link"
-            id="team-tasks-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#team-tasks-tab-pane"
-            type="button"
-            role="tab"
-          >
-            Team Tasks
-          </button>
-        </li>
-      </ul>
-
-      <div class="tab-content" id="managerTabContent">
-        <div
-          class="tab-pane fade show active p-3 border border-top-0"
-          id="approvals-tab-pane"
-          role="tabpanel"
-        >
-          <h4 class="mb-3">Pending Employee Requests</h4>
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th>Type</th>
-                  <th>Requested Date</th>
-                  <th>Details / Reason</th>
-                  <th>Submitted On</th>
-                  <th class="text-end">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="approvalsTableBody"></tbody>
-            </table>
+      <div class="col-md-6">
+        <div class="card text-bg-danger">
+          <div class="card-body">
+            <h5 class="card-title">
+              <i class="bi bi-calendar-x-fill"></i> Overdue Team Tasks
+            </h5>
+            <p class="card-text fs-2" id="overdueTasksKpi">0</p>
+            <a href="#team-tasks-tab-pane" class="card-link text-white">Go to Tasks &raquo;</a>
           </div>
-        </div>
-
-        <div
-          class="tab-pane fade p-3 border border-top-0"
-          id="team-tasks-tab-pane"
-          role="tabpanel"
-        >
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0">Team Task Dashboard</h4>
-            <button
-              class="btn btn-primary"
-              data-bs-toggle="modal"
-              data-bs-target="#createTaskModal"
-            >
-              <i class="bi bi-plus-circle-fill"></i> Create New Task
-            </button>
-          </div>
-          <div id="teamTasksList" class="row"></div>
         </div>
       </div>
     </div>
 
-    <div
-      class="modal fade"
-      id="rejectionModal"
-      tabindex="-1"
-      aria-labelledby="rejectionModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h1 class="modal-title fs-5" id="rejectionModalLabel">
-              Reason for Rejection
-            </h1>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
+    <ul class="nav nav-tabs" id="managerTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="approvals-tab" data-bs-toggle="tab" data-bs-target="#approvals-tab-pane"
+          type="button" role="tab">
+          Approvals Queue
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="team-tasks-tab" data-bs-toggle="tab" data-bs-target="#team-tasks-tab-pane"
+          type="button" role="tab">
+          Team Tasks
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="employee-info-tab" data-bs-toggle="tab" data-bs-target="#employee-info-tab-pane"
+          type="button" role="tab">
+          Employee Info
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="managerTabContent">
+      <div class="tab-pane fade show active p-3 border border-top-0" id="approvals-tab-pane" role="tabpanel">
+        <h4 class="mb-3">Pending Employee Requests</h4>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Type</th>
+                <th>Requested Date</th>
+                <th>Details / Reason</th>
+                <th>Submitted On</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="approvalsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="tab-pane fade p-3 border border-top-0" id="team-tasks-tab-pane" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="mb-0">Team Task Dashboard</h4>
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTaskModal">
+            <i class="bi bi-plus-circle-fill"></i> Create New Task
+          </button>
+        </div>
+        <div id="teamTasksList" class="row"></div>
+      </div>
+
+      <div class="tab-pane fade p-3 border border-top-0" id="employee-info-tab-pane" role="tabpanel">
+        <h4 class="mb-3">All Employees Information</h4>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Role</th>
+                <th>Manager ID</th>
+                <th>Monthly Salary</th>
+                <th>Annual Vacation Days</th>
+                <th>Email</th>
+              </tr>
+            </thead>
+            <tbody id="employeeTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="rejectionModalLabel">
+            Reason for Rejection
+          </h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Please provide a reason for rejecting the request.</p>
+          <textarea id="rejectionReason" class="form-control" rows="3" required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-primary" id="confirmRejectionBtn">
+            Confirm Rejection
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="createTaskModal" tabindex="-1" aria-labelledby="createTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="createTaskModalLabel">
+            Create New Task
+          </h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="createTaskForm">
           <div class="modal-body">
-            <p>Please provide a reason for rejecting the request.</p>
-            <textarea
-              id="rejectionReason"
-              class="form-control"
-              rows="3"
-              required
-            ></textarea>
+            <div class="mb-3">
+              <label for="taskTitle" class="form-label">Task Title</label>
+              <input type="text" class="form-control" id="taskTitle" required />
+            </div>
+            <div class="mb-3">
+              <label for="taskDescription" class="form-label">Description</label>
+              <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="taskPriority" class="form-label">Priority</label>
+                <select id="taskPriority" class="form-select" required>
+                  <option value="Low">Low</option>
+                  <option value="Medium" selected>Medium</option>
+                  <option value="High">High</option>
+                  <option value="Critical">Critical</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="taskDeadline" class="form-label">Deadline</label>
+                <input type="datetime-local" class="form-control" id="taskDeadline" required />
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Assign to</label>
+              <div id="taskAssignees" class="border rounded p-2" style="max-height: 150px; overflow-y: auto"></div>
+            </div>
           </div>
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Cancel
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Close
             </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              id="confirmRejectionBtn"
-            >
-              Confirm Rejection
-            </button>
+            <button type="submit" class="btn btn-primary">Save Task</button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
+  </div>
 
-    <div
-      class="modal fade"
-      id="createTaskModal"
-      tabindex="-1"
-      aria-labelledby="createTaskModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h1 class="modal-title fs-5" id="createTaskModalLabel">
-              Create New Task
-            </h1>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <form id="createTaskForm">
-            <div class="modal-body">
-              <div class="mb-3">
-                <label for="taskTitle" class="form-label">Task Title</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="taskTitle"
-                  required
-                />
-              </div>
-              <div class="mb-3">
-                <label for="taskDescription" class="form-label"
-                  >Description</label
-                >
-                <textarea
-                  class="form-control"
-                  id="taskDescription"
-                  rows="3"
-                ></textarea>
-              </div>
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label for="taskPriority" class="form-label">Priority</label>
-                  <select id="taskPriority" class="form-select" required>
-                    <option value="Low">Low</option>
-                    <option value="Medium" selected>Medium</option>
-                    <option value="High">High</option>
-                    <option value="Critical">Critical</option>
-                  </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label for="taskDeadline" class="form-label">Deadline</label>
-                  <input
-                    type="datetime-local"
-                    class="form-control"
-                    id="taskDeadline"
-                    required
-                  />
-                </div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Assign to</label>
-                <div
-                  id="taskAssignees"
-                  class="border rounded p-2"
-                  style="max-height: 150px; overflow-y: auto"
-                ></div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button
-                type="button"
-                class="btn btn-secondary"
-                data-bs-dismiss="modal"
-              >
-                Close
-              </button>
-              <button type="submit" class="btn btn-primary">Save Task</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11" id="toastContainer"></div>
 
-    <div
-      class="position-fixed bottom-0 end-0 p-3"
-      style="z-index: 11"
-      id="toastContainer"
-    ></div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/mock-data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/manager.js"></script>
+</body>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/mock-data.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/manager.js"></script>
-  </body>
 </html>

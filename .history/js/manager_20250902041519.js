@@ -116,25 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    /** Renders the employee info table with all employees. */
-    function renderEmployeeTable() {
-        const tbody = document.getElementById('employeeTableBody');
-        tbody.innerHTML = '';
-        allEmployees.forEach(emp => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${emp.id}</td>
-                <td>${emp.name}</td>
-                <td>${emp.department}</td>
-                <td>${emp.role}</td>
-                <td>${emp.managerId || 'N/A'}</td>
-                <td>${emp.monthlySalary}</td>
-                <td>${emp.annualVacationDays}</td>
-                <td>${emp.email}</td>`;
-            tbody.appendChild(tr);
-        });
-    }
-
 
     // =================================================================
     // --- 3. HANDLER FUNCTIONS (Handle all user actions) ---
@@ -149,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allRequests[requestIndex].managerComment = 'Approved';
         allRequests[requestIndex].decidedAt = getISODate();
         DataService.saveRequests(allRequests);
-
+        
         myTeamRequests = allRequests.filter(r => myTeamIds.includes(r.employeeId)); // Refresh state
         renderKPIs();
         renderApprovalsQueue();
@@ -182,13 +163,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm("Are you sure you want to permanently delete this task?")) {
             return;
         }
-
+        
         const index = allTasks.findIndex(t => t.taskId === taskId);
         if (index === -1) return;
-
+        
         allTasks.splice(index, 1);
         DataService.saveTasks(allTasks);
-
+        
         myTeamTasks = allTasks.filter(t => t.assignees.some(id => myTeamIds.includes(id)));
         renderTeamTasks();
         renderKPIs(); // The overdue count might change
@@ -209,96 +190,4 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const newTask = { taskId: Date.now(), title, description, priority, deadline, assignees: selectedAssignees, status: "Not Started", createdBy: currentUser.id, createdAt: getISODate() };
-        allTasks.push(newTask);
-        DataService.saveTasks(allTasks);
-
-        myTeamTasks = allTasks.filter(t => t.assignees.some(id => myTeamIds.includes(id)));
-        renderTeamTasks();
-        renderKPIs();
-
-        createTaskModal.hide();
-        createTaskForm.reset();
-        taskDeadlineInput.classList.remove("is-invalid");
-        saveTaskBtn.disabled = false;
-        showToast("Task created successfully!", "success");
-    }
-
-
-    // =================================================================
-    // --- 4. EVENT LISTENERS (Wire up the UI) ---
-    // =================================================================
-
-    // Listener for KPI card links
-    document.querySelectorAll('.card-link[href^="#"]').forEach(link => {
-        link.addEventListener('click', e => {
-            e.preventDefault();
-            const tabPaneId = e.currentTarget.getAttribute('href');
-            const tabToActivate = document.querySelector(`.nav-tabs button[data-bs-target="${tabPaneId}"]`);
-            if (tabToActivate) {
-                new bootstrap.Tab(tabToActivate).show();
-            }
-        });
-    });
-
-    // Listener for approvals table (Approve/Reject)
-    approvalsTableBody.addEventListener("click", (e) => {
-        const tr = e.target.closest('tr');
-        if (!tr || !tr.dataset.requestId) return;
-        const requestId = parseInt(tr.dataset.requestId);
-        if (e.target.closest('.approve-btn')) {
-            handleApproval(requestId);
-        } else if (e.target.closest('.reject-btn')) {
-            confirmRejectionBtn.dataset.requestId = requestId;
-            document.getElementById('rejectionReason').value = '';
-            rejectionModal.show();
-        }
-    });
-
-    // Listener for rejection modal confirmation
-    confirmRejectionBtn.addEventListener("click", () => {
-        const requestId = parseInt(confirmRejectionBtn.dataset.requestId);
-        const reason = document.getElementById('rejectionReason').value.trim();
-        handleRejection(requestId, reason);
-    });
-
-    // Listener for task list (Delete)
-    teamTasksListContainer.addEventListener("click", (e) => {
-        const deleteBtn = e.target.closest(".delete-task-btn");
-        if (deleteBtn) {
-            const taskId = parseInt(deleteBtn.dataset.taskId);
-            handleTaskDeletion(taskId);
-        }
-    });
-
-    // Listener for creating a new task
-    createTaskForm.addEventListener("submit", handleTaskCreation);
-
-    // Listener for validating the task deadline
-    taskDeadlineInput.addEventListener("input", () => {
-        const selectedDate = new Date(taskDeadlineInput.value);
-        const now = new Date();
-        now.setSeconds(0, 0);
-        if (selectedDate < now) {
-            taskDeadlineInput.classList.add("is-invalid");
-            saveTaskBtn.disabled = true;
-        } else {
-            taskDeadlineInput.classList.remove("is-invalid");
-            saveTaskBtn.disabled = false;
-        }
-    });
-
-
-    // =================================================================
-    // --- 5. INITIALIZATION ---
-    // =================================================================
-    function init() {
-        renderKPIs();
-        renderApprovalsQueue();
-        renderTeamTasks();
-        renderEmployeeTable();
-        populateCreateTaskForm();
-    }
-
-    init();
-});
+        const newTask = { taskId: Date.now(), title, description, priority
