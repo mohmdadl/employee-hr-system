@@ -11,7 +11,7 @@ const AppConfig = {
 
 
 /**
- * @param {Date} d - كائن التاريخ
+ * @param {Date} d 
  * @returns {number}
  */
 function getWeekNumber(d) {
@@ -23,7 +23,7 @@ function getWeekNumber(d) {
 }
 
 /**
- * @param {Date} date - كائن التاريخ
+ * @param {Date} date -
  * @returns {string}
  */
 function getISODate(date = new Date()) {
@@ -32,8 +32,8 @@ function getISODate(date = new Date()) {
 
 
 /**
- * @param {string | null} checkInTime - وقت الحضور بصيغة "HH:MM"
- * @returns {object} - { status: string, minutesLate: number }
+ * @param {string | null} checkInTime 
+ * @returns {object} 
  */
 function calculateAttendanceDetails(checkInTime, recordDate = getISODate()) {
     if (!checkInTime) {
@@ -60,8 +60,8 @@ function calculateAttendanceDetails(checkInTime, recordDate = getISODate()) {
 
 
 /**
- * @param {string} message - الرسالة المراد عرضها
- * @param {string} type - 'success', 'danger', 'info', 'warning'
+ * @param {string} message 
+ * @param {string} type 
  */
 function showToast(message, type = 'success') {
     const toastContainer = document.getElementById('toastContainer');
@@ -92,12 +92,6 @@ function showToast(message, type = 'success') {
 }
 
 
-// js/utils.js (append this code)
-
-// =================================================================
-// --- Salary Impact Calculation Module ---
-// =================================================================
-
 const SalaryCalculator = {
     /**
      * Calculates the penalty for a single late attendance record.
@@ -106,13 +100,22 @@ const SalaryCalculator = {
      * @param {object} settings - The HR settings object containing penalty tiers.
      * @returns {number} - The calculated penalty amount.
      */
+
     getLatePenalty: function (minutesLate, dailyWage, settings) {
-        if (minutesLate <= 0) return 0; // No penalty for on time or early
+        if (minutesLate <= 15) return 0;
 
-        // Dynamic penalty: 5% of daily wage for any late arrival
-        return dailyWage * (5 / 100);
+        const tiers = settings.latePenaltyTiers;
+        if (minutesLate >= tiers.tier1.from && minutesLate <= tiers.tier1.to) {
+            return dailyWage * (tiers.tier1.penalty / 100);
+        }
+        if (minutesLate >= tiers.tier2.from && minutesLate <= tiers.tier2.to) {
+            return dailyWage * (tiers.tier2.penalty / 100);
+        }
+        if (minutesLate >= tiers.tier3.from && minutesLate <= tiers.tier3.to) {
+            return dailyWage * (tiers.tier3.penalty / 100);
+        }
+        return 0; // No penalty if it falls outside the tiers
     },
-
     /**
      * Calculates all financial impacts for a single employee for a given month.
      * @param {number} employeeId - The ID of the employee.
@@ -219,12 +222,6 @@ const SalaryCalculator = {
         });
 
 
-        // 4. TODO: Calculate Overtime Pay
-        // This would be similar, filtering for approved Overtime requests.
-
-        // 5. TODO: Calculate Ideal Employee Bonus
-
-        // --- Apply Monthly Cap ---
         impact.totalDeductions = impact.latePenalty + impact.absencePenalty + impact.taskPenalty;
         const capAmount = monthlySalary * (data.settings.deductionCap / 100);
         if (impact.totalDeductions > capAmount) {
@@ -237,13 +234,6 @@ const SalaryCalculator = {
         return impact;
     }
 };
-
-
-// js/utils.js (append this code)
-
-// =================================================================
-// --- Ideal Employee Calculation ---
-// =================================================================
 
 /**
  * Determines the Ideal Employee(s) of the Month based on strict criteria.
@@ -294,7 +284,6 @@ function findIdealEmployee(year, month, data) {
         winners.push(candidate);
     });
 
-    // TODO: Implement Tie-Breakers if needed
     return winners;
 }
 /**
@@ -317,7 +306,6 @@ function updatePayrollImpact(employeeId, details) {
 
     const impact = SalaryCalculator.calculateMonthlyImpact(employeeId, year, month, data);
 
-    // تخزين النتيجة في localStorage عشان HR أو payroll page تقدر تعرضها
     localStorage.setItem("payrollImpact_" + employeeId, JSON.stringify(impact));
 
     return impact;

@@ -4,8 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     let payrollImpact = null;
     if (!currentUser || currentUser.role !== 'Employee') {
-        // Optional: redirect to login if not an employee, though main.js should handle it.
-        // window.location.href = 'index.html';
         return;
     }
 
@@ -417,13 +415,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Calculate the payroll impact for the current user and month ---
         payrollImpact = SalaryCalculator.calculateMonthlyImpact(currentUser.id, today.getFullYear(), today.getMonth(), allData);
 
-        // --- Now render everything ---
         renderKPIs();
         renderAttendance();
         renderTasks();
         renderRequestForm();
         renderRequestsHistory();
-        renderPayrollImpact(); // <-- Call the new render function
+        renderPayrollImpact();
     }
 
     init();

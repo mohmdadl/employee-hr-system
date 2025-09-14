@@ -15,9 +15,9 @@ const employees = [
     { id: 5, name: 'Noha Adel', department: 'IT', role: 'Employee', managerId: 2, monthlySalary: 6000, annualVacationDays: 21, email: 'noha@demo.com', password: '123' },
 
 
-    { id: 2, name: 'Fatima Ali', department: 'IT', role: 'Manager', monthlySalary: 9000, annualVacationDays: 21, email: 'manager@demo.com', password: '123' },
-    { id: 3, name: 'Sayed Ibrahim', department: 'Operations', role: 'Security', email: 'security@demo.com', password: '123' },
-    { id: 4, name: 'Ali Hassan', department: 'HR', role: 'HR', email: 'hr@demo.com', password: '123' }
+    { id: 2, name: 'Fatima Ali', department: 'IT', role: 'Manager', managerId: 2, monthlySalary: 9000, annualVacationDays: 21, email: 'manager@demo.com', password: '123' },
+    { id: 3, name: 'Sayed Ibrahim', department: 'Operations', role: 'Security', managerId: 2, monthlySalary: 7000, annualVacationDays: 21, email: 'security@demo.com', password: '123' },
+    { id: 4, name: 'Ali Hassan', department: 'HR', role: 'HR', managerId: 2, monthlySalary: 8000, annualVacationDays: 21, email: 'hr@demo.com', password: '123' }
 ];
 
 
